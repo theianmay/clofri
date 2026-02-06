@@ -1,73 +1,68 @@
-# React + TypeScript + Vite
+# clofri
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Presence-first, ephemeral chat for close friends. Messages fade. If you're not here, you miss it.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Frontend:** Vite + React + TypeScript + TailwindCSS
+- **Backend:** Supabase (Auth, Postgres, Realtime Broadcast + Presence)
+- **Deploy:** Vercel (frontend) + Supabase (backend)
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Create a Supabase project
 
-## Expanding the ESLint configuration
+Go to [supabase.com](https://supabase.com) and create a new project.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 2. Run the database schema
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Open the SQL Editor in your Supabase dashboard and run the contents of `supabase/schema.sql`.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### 3. Enable Auth providers
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+In Supabase Dashboard → Authentication → Providers:
+- Enable **Google** (add OAuth client ID and secret from Google Cloud Console)
+- **Email (magic link)** is enabled by default
+
+### 4. Configure environment
+
+```bash
+cp .env.example .env
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Fill in your Supabase URL and anon key from Dashboard → Settings → API.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 5. Install and run
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173).
+
+## Project Structure
+
+```
+src/
+├── components/       # React UI components
+│   ├── Login.tsx     # Auth page (Google OAuth + magic link)
+│   ├── Layout.tsx    # App shell with sidebar navigation
+│   ├── Home.tsx      # Groups list with create/join
+│   ├── GroupChat.tsx  # Real-time chat room
+│   └── Friends.tsx   # Friend management
+├── hooks/
+│   └── useChat.ts    # Real-time chat hook (Broadcast + Presence)
+├── stores/
+│   ├── authStore.ts  # Auth state (Zustand)
+│   ├── groupStore.ts # Groups CRUD
+│   └── friendStore.ts # Friends CRUD
+├── lib/
+│   └── supabase.ts   # Supabase client
+├── types/
+│   └── database.ts   # TypeScript types for DB schema
+├── App.tsx           # Root with routing + auth guard
+└── main.tsx          # Entry point
+supabase/
+└── schema.sql        # Database schema + RLS policies
 ```
