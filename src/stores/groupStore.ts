@@ -24,51 +24,58 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   fetchGroups: async () => {
     set({ loading: true })
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { set({ loading: false }); return }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { set({ loading: false }); return }
 
-    // Get groups the user is a member of
-    const { data: memberships } = await supabase
-      .from('group_members')
-      .select('group_id')
-      .eq('user_id', user.id)
+      // Get groups the user is a member of
+      const { data: memberships, error: memErr } = await supabase
+        .from('group_members')
+        .select('group_id')
+        .eq('user_id', user.id)
 
-    if (!memberships || memberships.length === 0) {
-      set({ groups: [], loading: false })
-      return
+      if (memErr) { console.error('fetchGroups memberships error:', memErr); set({ loading: false }); return }
+      if (!memberships || memberships.length === 0) {
+        set({ groups: [], loading: false })
+        return
+      }
+
+      const groupIds = memberships.map((m: any) => m.group_id)
+
+      const { data: groups, error: grpErr } = await supabase
+        .from('groups')
+        .select('*')
+        .in('id', groupIds)
+
+      if (grpErr) { console.error('fetchGroups groups error:', grpErr); set({ loading: false }); return }
+      if (!groups) { set({ groups: [], loading: false }); return }
+
+      // Get all members for these groups with profiles
+      const { data: allMembers } = await supabase
+        .from('group_members')
+        .select('*')
+        .in('group_id', groupIds)
+
+      const memberUserIds = [...new Set((allMembers || []).map((m: any) => m.user_id))]
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', memberUserIds)
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+
+      const groupsWithMembers: GroupWithMembers[] = groups.map((g: any) => ({
+        ...g,
+        members: (allMembers || [])
+          .filter((m: any) => m.group_id === g.id)
+          .map((m: any) => ({ ...m, profile: profileMap.get(m.user_id)! })),
+      }))
+
+      set({ groups: groupsWithMembers, loading: false })
+    } catch (err) {
+      console.error('fetchGroups unexpected error:', err)
+      set({ loading: false })
     }
-
-    const groupIds = memberships.map((m: any) => m.group_id)
-
-    const { data: groups } = await supabase
-      .from('groups')
-      .select('*')
-      .in('id', groupIds)
-
-    if (!groups) { set({ groups: [], loading: false }); return }
-
-    // Get all members for these groups with profiles
-    const { data: allMembers } = await supabase
-      .from('group_members')
-      .select('*')
-      .in('group_id', groupIds)
-
-    const memberUserIds = [...new Set((allMembers || []).map((m: any) => m.user_id))]
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('*')
-      .in('id', memberUserIds)
-
-    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
-
-    const groupsWithMembers: GroupWithMembers[] = groups.map((g: any) => ({
-      ...g,
-      members: (allMembers || [])
-        .filter((m: any) => m.group_id === g.id)
-        .map((m: any) => ({ ...m, profile: profileMap.get(m.user_id)! })),
-    }))
-
-    set({ groups: groupsWithMembers, loading: false })
   },
 
   createGroup: async (name: string) => {

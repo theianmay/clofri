@@ -1,11 +1,39 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { MessageCircle, Users, LogOut, Copy, Check } from 'lucide-react'
-import { useState } from 'react'
+import { MessageCircle, Users, LogOut, Copy, Check, Pencil } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
 
 export function Layout() {
-  const { profile, signOut } = useAuthStore()
+  const { profile, signOut, updateProfile } = useAuthStore()
   const [copied, setCopied] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState('')
+  const nameInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (editingName && nameInputRef.current) {
+      nameInputRef.current.focus()
+      nameInputRef.current.select()
+    }
+  }, [editingName])
+
+  const startEditingName = () => {
+    setNameInput(profile?.display_name || '')
+    setEditingName(true)
+  }
+
+  const saveName = async () => {
+    const trimmed = nameInput.trim()
+    if (trimmed && trimmed !== profile?.display_name) {
+      await updateProfile({ display_name: trimmed })
+    }
+    setEditingName(false)
+  }
+
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') saveName()
+    if (e.key === 'Escape') setEditingName(false)
+  }
 
   const copyFriendCode = () => {
     if (!profile) return
@@ -72,9 +100,25 @@ export function Layout() {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-medium truncate">
-                {profile?.display_name}
-              </p>
+              {editingName ? (
+                <input
+                  ref={nameInputRef}
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  onBlur={saveName}
+                  onKeyDown={handleNameKeyDown}
+                  className="w-full bg-zinc-800 text-white text-sm font-medium px-1.5 py-0.5 rounded border border-zinc-600 focus:border-blue-500 focus:outline-none"
+                  maxLength={30}
+                />
+              ) : (
+                <button
+                  onClick={startEditingName}
+                  className="flex items-center gap-1 text-white text-sm font-medium truncate hover:text-zinc-300 transition-colors group/name"
+                >
+                  <span className="truncate">{profile?.display_name}</span>
+                  <Pencil className="w-3 h-3 text-zinc-600 group-hover/name:text-zinc-400 shrink-0" />
+                </button>
+              )}
               <button
                 onClick={copyFriendCode}
                 className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
