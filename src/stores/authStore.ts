@@ -79,13 +79,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 }))
 
 async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
-  const { data: existing } = await supabase
+  const { data: existing, error: selectError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single()
 
   if (existing) return existing as Profile
+  if (selectError) console.log('Profile not found, creating...', selectError.message)
 
   const displayName =
     user.user_metadata?.full_name ||
@@ -93,7 +94,7 @@ async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
     user.email?.split('@')[0] ||
     'Anonymous'
 
-  const { data: created } = await supabase
+  const { data: created, error: insertError } = await supabase
     .from('profiles')
     .insert({
       id: user.id,
@@ -103,6 +104,9 @@ async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
     } as any)
     .select()
     .single()
+
+  if (insertError) console.error('Profile creation failed:', insertError)
+  if (created) console.log('Profile created:', (created as any).id)
 
   return created as Profile | null
 }

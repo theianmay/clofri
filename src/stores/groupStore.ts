@@ -73,7 +73,7 @@ export const useGroupStore = create<GroupState>((set, get) => ({
 
   createGroup: async (name: string) => {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return null
+    if (!user) { console.error('createGroup: no user'); return null }
 
     const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase()
 
@@ -83,12 +83,15 @@ export const useGroupStore = create<GroupState>((set, get) => ({
       .select()
       .single()
 
-    if (error || !group) return null
+    if (error) { console.error('createGroup insert error:', error); return null }
+    if (!group) { console.error('createGroup: no group returned'); return null }
 
     // Add creator as a member
-    await supabase
+    const { error: memberError } = await supabase
       .from('group_members')
       .insert({ group_id: (group as any).id, user_id: user.id, role: 'creator' } as any)
+
+    if (memberError) console.error('createGroup member insert error:', memberError)
 
     await get().fetchGroups()
     return group as Group
