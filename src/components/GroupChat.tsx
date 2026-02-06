@@ -93,7 +93,7 @@ export function GroupChat() {
             <p className="text-zinc-500 text-xs">
               {members.length} online
               {typingUsers.length > 0 && (
-                <span className="text-indigo-400 ml-2">
+                <span className="text-blue-400 ml-2">
                   {typingUsers.join(', ')} typing...
                 </span>
               )}
@@ -141,7 +141,7 @@ export function GroupChat() {
                   <div
                     className={`inline-block px-3 py-2 rounded-2xl text-sm ${
                       isOwn
-                        ? 'bg-indigo-600 text-white rounded-br-md'
+                        ? 'bg-blue-600 text-white rounded-br-md'
                         : 'bg-zinc-800 text-zinc-200 rounded-bl-md'
                     }`}
                   >
@@ -177,12 +177,12 @@ export function GroupChat() {
               value={input}
               onChange={handleInput}
               placeholder="Type a message..."
-              className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-4 py-2.5 rounded-xl border border-zinc-700 focus:border-indigo-500 focus:outline-none text-sm"
+              className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-4 py-2.5 rounded-xl border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm"
             />
             <button
               type="submit"
               disabled={!input.trim()}
-              className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <Send className="w-4 h-4" />
             </button>

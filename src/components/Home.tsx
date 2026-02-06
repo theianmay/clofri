@@ -69,7 +69,7 @@ export function Home() {
             </button>
             <button
               onClick={() => { setShowCreate(true); setShowJoin(false); setError(null) }}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
             >
               <Plus className="w-4 h-4" />
               New Group
@@ -86,12 +86,12 @@ export function Home() {
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
               autoFocus
-              className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-indigo-500 focus:outline-none text-sm"
+              className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm"
             />
             <button
               type="submit"
               disabled={actionLoading || !newGroupName.trim()}
-              className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 disabled:opacity-50 transition-colors"
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 disabled:opacity-50 transition-colors"
             >
               {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create'}
             </button>
@@ -115,12 +115,12 @@ export function Home() {
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                 autoFocus
-                className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-indigo-500 focus:outline-none text-sm font-mono tracking-wider"
+                className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm font-mono tracking-wider"
               />
               <button
                 type="submit"
                 disabled={actionLoading || !joinCode.trim()}
-                className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 disabled:opacity-50 transition-colors"
               >
                 {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Join'}
               </button>
@@ -170,7 +170,7 @@ export function Home() {
                     <div className="flex items-center gap-2">
                       <p className="text-white font-medium truncate">{group.name}</p>
                       {isCreator && (
-                        <span className="text-[10px] bg-indigo-600/20 text-indigo-400 px-1.5 py-0.5 rounded font-medium">
+                        <span className="text-[10px] bg-blue-600/20 text-blue-400 px-1.5 py-0.5 rounded font-medium">
                           Owner
                         </span>
                       )}

@@ -20,7 +20,7 @@ export function Layout() {
       <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col">
         <div className="p-4 border-b border-zinc-800">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
               <MessageCircle className="w-4 h-4 text-white" />
             </div>
             <span className="text-white font-semibold text-lg">clofri</span>

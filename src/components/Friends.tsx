@@ -77,7 +77,7 @@ export function Friends() {
           </div>
           <button
             onClick={() => { setShowAdd(!showAdd); setError(null); setSuccess(null) }}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
           >
             <UserPlus className="w-4 h-4" />
             Add Friend
@@ -96,12 +96,12 @@ export function Friends() {
                 value={friendCode}
                 onChange={(e) => setFriendCode(e.target.value.toUpperCase())}
                 autoFocus
-                className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-indigo-500 focus:outline-none text-sm font-mono tracking-wider"
+                className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm font-mono tracking-wider"
               />
               <button
                 type="submit"
                 disabled={actionLoading || !friendCode.trim()}
-                className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 disabled:opacity-50 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 disabled:opacity-50 transition-colors flex items-center gap-2"
               >
                 {actionLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
