@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useFriendStore } from '../stores/friendStore'
 import { usePresenceStore } from '../stores/presenceStore'
 import { useCategoryStore } from '../stores/categoryStore'
+import { useDMStore } from '../stores/dmStore'
 import {
   UserPlus,
   Check,
@@ -33,6 +34,7 @@ export function Friends() {
   const { onlineUsers, getStatus } = usePresenceStore()
 
   const { categories, assignments, addCategory, removeCategory, assignFriend } = useCategoryStore()
+  const startSession = useDMStore((s) => s.startSession)
   const navigate = useNavigate()
 
   const [showAdd, setShowAdd] = useState(false)
@@ -106,8 +108,9 @@ export function Friends() {
     await removeFriend(id)
   }
 
-  const handleStartDM = (friendId: string) => {
-    navigate(`/dm/${friendId}`)
+  const handleStartDM = async (friendId: string) => {
+    const sessionId = await startSession(friendId)
+    if (sessionId) navigate(`/dm/${sessionId}`)
   }
 
   return (

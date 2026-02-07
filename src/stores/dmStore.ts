@@ -2,10 +2,11 @@ import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
 import type { Profile } from '../types/database'
 
-export interface DMConversation {
+export interface DMSession {
+  id: string
   friendId: string
   friend: Profile
-  lastMessageAt: string | null
+  startedAt: string
 }
 
 const LAST_READ_KEY = 'clofri-dm-last-read'
@@ -16,61 +17,57 @@ function getLastRead(): Record<string, string> {
   } catch { return {} }
 }
 
-function setLastRead(friendId: string) {
+function setLastRead(sessionId: string) {
   const data = getLastRead()
-  data[friendId] = new Date().toISOString()
+  data[sessionId] = new Date().toISOString()
   localStorage.setItem(LAST_READ_KEY, JSON.stringify(data))
 }
 
 interface DMState {
-  conversations: DMConversation[]
+  sessions: DMSession[]
   unreadDMs: Set<string>
   loading: boolean
-  fetchConversations: () => Promise<void>
-  markRead: (friendId: string) => void
+  fetchSessions: () => Promise<void>
+  startSession: (friendId: string) => Promise<string | null>
+  endSession: (sessionId: string) => Promise<void>
+  markRead: (sessionId: string) => void
 }
 
 export const useDMStore = create<DMState>((set, get) => ({
-  conversations: [],
+  sessions: [],
   unreadDMs: new Set(),
   loading: false,
 
-  fetchConversations: async () => {
+  fetchSessions: async () => {
     set({ loading: true })
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { set({ loading: false }); return }
 
-      // Get all DMs involving this user, ordered by most recent
-      const { data: dms, error } = await supabase
-        .from('direct_messages')
-        .select('sender_id, receiver_id, created_at')
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .order('created_at', { ascending: false })
+      // Get active DM sessions for this user
+      const { data: rawSessions, error } = await supabase
+        .from('dm_sessions')
+        .select('*')
+        .eq('is_active', true)
+        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+        .order('started_at', { ascending: false })
 
       if (error) {
-        console.error('fetchConversations error:', error)
+        console.error('fetchSessions error:', error)
         set({ loading: false })
         return
       }
 
-      if (!dms || dms.length === 0) {
-        set({ conversations: [], unreadDMs: new Set(), loading: false })
+      if (!rawSessions || rawSessions.length === 0) {
+        set({ sessions: [], unreadDMs: new Set(), loading: false })
         return
       }
 
-      // Build unique conversation list with latest message time
-      const convMap = new Map<string, string>() // friendId -> latest created_at
-      for (const dm of dms as any[]) {
-        const friendId = dm.sender_id === user.id ? dm.receiver_id : dm.sender_id
-        if (!convMap.has(friendId)) {
-          convMap.set(friendId, dm.created_at)
-        }
-      }
-
-      // Fetch friend profiles
-      const friendIds = [...convMap.keys()]
+      // Get friend profiles
+      const friendIds = rawSessions.map((s: any) =>
+        s.user1_id === user.id ? s.user2_id : s.user1_id
+      )
       const { data: profiles } = await supabase
         .from('profiles')
         .select('*')
@@ -78,43 +75,103 @@ export const useDMStore = create<DMState>((set, get) => ({
 
       const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
 
-      // Build conversations sorted by most recent
-      const conversations: DMConversation[] = friendIds
-        .map((fid) => ({
-          friendId: fid,
-          friend: profileMap.get(fid)!,
-          lastMessageAt: convMap.get(fid) || null,
-        }))
-        .filter((c) => c.friend) // skip if profile not found
-        .sort((a, b) => {
-          if (!a.lastMessageAt) return 1
-          if (!b.lastMessageAt) return -1
-          return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
+      const sessions: DMSession[] = rawSessions
+        .map((s: any) => {
+          const friendId = s.user1_id === user.id ? s.user2_id : s.user1_id
+          return {
+            id: s.id,
+            friendId,
+            friend: profileMap.get(friendId)!,
+            startedAt: s.started_at,
+          }
         })
+        .filter((s: DMSession) => s.friend)
 
-      // Check unread
+      // Check unread — look for messages newer than last read
       const lastRead = getLastRead()
       const unread = new Set<string>()
-      for (const conv of conversations) {
-        if (conv.lastMessageAt) {
-          const lastSeen = lastRead[conv.friendId]
-          if (!lastSeen || new Date(conv.lastMessageAt) > new Date(lastSeen)) {
-            unread.add(conv.friendId)
+      for (const session of sessions) {
+        const { data: latestMsg } = await supabase
+          .from('direct_messages')
+          .select('created_at')
+          .eq('session_id', session.id)
+          .neq('sender_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+
+        if (latestMsg && latestMsg.length > 0) {
+          const lastSeen = lastRead[session.id]
+          if (!lastSeen || new Date((latestMsg[0] as any).created_at) > new Date(lastSeen)) {
+            unread.add(session.id)
           }
         }
       }
 
-      set({ conversations, unreadDMs: unread, loading: false })
+      set({ sessions, unreadDMs: unread, loading: false })
     } catch (err) {
-      console.error('fetchConversations unexpected error:', err)
+      console.error('fetchSessions unexpected error:', err)
       set({ loading: false })
     }
   },
 
-  markRead: (friendId: string) => {
-    setLastRead(friendId)
+  startSession: async (friendId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return null
+
+      // Ensure consistent ordering (user1_id < user2_id)
+      const [user1, user2] = [user.id, friendId].sort()
+
+      // Check for existing active session
+      const { data: existing } = await supabase
+        .from('dm_sessions')
+        .select('id')
+        .eq('user1_id', user1)
+        .eq('user2_id', user2)
+        .eq('is_active', true)
+        .single()
+
+      if (existing) return (existing as any).id as string
+
+      // Create new session
+      const { data: session, error } = await supabase
+        .from('dm_sessions')
+        .insert({ user1_id: user1, user2_id: user2 } as any)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('startSession error:', error)
+        return null
+      }
+
+      await get().fetchSessions()
+      return (session as any).id as string
+    } catch (err) {
+      console.error('startSession unexpected error:', err)
+      return null
+    }
+  },
+
+  endSession: async (sessionId: string) => {
+    try {
+      // Delete all messages for this session
+      await supabase.from('direct_messages').delete().eq('session_id', sessionId)
+      // Mark session as inactive
+      await supabase
+        .from('dm_sessions')
+        .update({ is_active: false, ended_at: new Date().toISOString() } as never)
+        .eq('id', sessionId)
+      await get().fetchSessions()
+    } catch (err) {
+      console.error('endSession error:', err)
+    }
+  },
+
+  markRead: (sessionId: string) => {
+    setLastRead(sessionId)
     const unread = new Set(get().unreadDMs)
-    unread.delete(friendId)
+    unread.delete(sessionId)
     set({ unreadDMs: unread })
   },
 }))

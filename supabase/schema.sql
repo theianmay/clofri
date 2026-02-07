@@ -31,6 +31,7 @@ create table if not exists public.groups (
   name text not null,
   creator_id uuid not null references public.profiles(id) on delete cascade,
   invite_code text unique not null default upper(substr(md5(random()::text), 1, 6)),
+  is_active boolean not null default true,
   created_at timestamptz not null default now()
 );
 
@@ -50,6 +51,27 @@ create table if not exists public.messages (
   id uuid primary key default gen_random_uuid(),
   group_id uuid not null references public.groups(id) on delete cascade,
   user_id uuid not null references public.profiles(id) on delete cascade,
+  text text not null check (char_length(text) <= 2000),
+  created_at timestamptz not null default now()
+);
+
+-- DM sessions (ephemeral 1-on-1 conversations)
+create table if not exists public.dm_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user1_id uuid not null references public.profiles(id) on delete cascade,
+  user2_id uuid not null references public.profiles(id) on delete cascade,
+  is_active boolean not null default true,
+  started_at timestamptz not null default now(),
+  ended_at timestamptz,
+  check (user1_id < user2_id)
+);
+
+-- Direct messages (tied to a session)
+create table if not exists public.direct_messages (
+  id uuid primary key default gen_random_uuid(),
+  sender_id uuid not null references public.profiles(id) on delete cascade,
+  receiver_id uuid not null references public.profiles(id) on delete cascade,
+  session_id uuid references public.dm_sessions(id) on delete cascade,
   text text not null check (char_length(text) <= 2000),
   created_at timestamptz not null default now()
 );

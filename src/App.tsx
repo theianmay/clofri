@@ -37,7 +37,7 @@ function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<ErrorBoundary><Friends /></ErrorBoundary>} />
             <Route path="/messages" element={<ErrorBoundary><Messages /></ErrorBoundary>} />
-            <Route path="/dm/:friendId" element={<ErrorBoundary><DMChat /></ErrorBoundary>} />
+            <Route path="/dm/:sessionId" element={<ErrorBoundary><DMChat /></ErrorBoundary>} />
             <Route path="/groups" element={<ErrorBoundary><Home /></ErrorBoundary>} />
             <Route path="/group/:groupId" element={<ErrorBoundary><GroupChat /></ErrorBoundary>} />
           </Route>

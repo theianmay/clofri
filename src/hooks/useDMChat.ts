@@ -15,10 +15,11 @@ export interface DMMessage {
 }
 
 interface UseDMChatOptions {
+  sessionId: string
   friendId: string
 }
 
-export function useDMChat({ friendId }: UseDMChatOptions) {
+export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
   const profile = useAuthStore((s) => s.profile)
   const [messages, setMessages] = useState<DMMessage[]>([])
   const [typingUsers, setTypingUsers] = useState<string[]>([])
@@ -27,24 +28,20 @@ export function useDMChat({ friendId }: UseDMChatOptions) {
   const isTypingRef = useRef(false)
 
   useEffect(() => {
-    if (!profile || !friendId) return
+    if (!profile || !sessionId || !friendId) return
 
-    // Fetch recent DMs from DB
+    // Fetch recent DMs for this session from DB
     const fetchHistory = async () => {
-      // Get DMs between these two users
       const { data, error } = await supabase
         .from('direct_messages')
         .select('*')
-        .or(
-          `and(sender_id.eq.${profile.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${profile.id})`
-        )
+        .eq('session_id', sessionId)
         .order('created_at', { ascending: true })
         .limit(50)
 
       if (error) console.error('DM fetchHistory error:', error)
 
       if (data) {
-        // Get profiles for display names
         const userIds = [...new Set(data.map((m: any) => m.sender_id))]
         const { data: profiles } = await supabase
           .from('profiles')
@@ -69,9 +66,8 @@ export function useDMChat({ friendId }: UseDMChatOptions) {
 
     fetchHistory()
 
-    // Realtime channel — use sorted IDs for consistent channel name
-    const sorted = [profile.id, friendId].sort()
-    const channelName = `dm:${sorted[0]}:${sorted[1]}`
+    // Realtime channel scoped to session
+    const channelName = `dm-session:${sessionId}`
 
     const channel = supabase.channel(channelName)
 
@@ -111,7 +107,7 @@ export function useDMChat({ friendId }: UseDMChatOptions) {
       channel.unsubscribe()
       channelRef.current = null
     }
-  }, [friendId, profile])
+  }, [sessionId, friendId, profile])
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -143,12 +139,13 @@ export function useDMChat({ friendId }: UseDMChatOptions) {
         sender_id: profile.id,
         receiver_id: friendId,
         text: msg.text,
+        session_id: sessionId,
       } as any)
       if (error) console.error('DM persist failed:', error)
 
       isTypingRef.current = false
     },
-    [profile, friendId]
+    [profile, friendId, sessionId]
   )
 
   const sendTyping = useCallback(() => {

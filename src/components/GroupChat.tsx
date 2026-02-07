@@ -14,6 +14,7 @@ import {
   LogOut,
   Trash2,
   Circle,
+  PhoneOff,
 } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
 
@@ -21,7 +22,7 @@ export function GroupChat() {
   const { groupId } = useParams<{ groupId: string }>()
   const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
-  const { groups, fetchGroups, leaveGroup, deleteGroup, kickMember, markRead } = useGroupStore()
+  const { groups, fetchGroups, leaveGroup, deleteGroup, endGroupSession, kickMember, markRead } = useGroupStore()
   const group = groups.find((g) => g.id === groupId)
 
   const { messages, members, typingUsers, sendMessage, sendTyping } = useChat({
@@ -73,6 +74,12 @@ export function GroupChat() {
   const handleDelete = async () => {
     if (!groupId || !confirm('Delete this group? This cannot be undone.')) return
     await deleteGroup(groupId)
+    navigate('/groups')
+  }
+
+  const handleEndSession = async () => {
+    if (!groupId || !confirm('End this session? All messages will be deleted and the group will close.')) return
+    await endGroupSession(groupId)
     navigate('/groups')
   }
 
@@ -267,6 +274,15 @@ export function GroupChat() {
 
           {/* Actions */}
           <div className="p-3 border-t border-zinc-800 space-y-1">
+            {isCreator && (
+              <button
+                onClick={handleEndSession}
+                className="flex items-center gap-2 text-amber-400 hover:text-amber-300 text-sm px-2 py-1.5 w-full rounded-lg hover:bg-zinc-800/50 transition-colors"
+              >
+                <PhoneOff className="w-4 h-4" />
+                End Session
+              </button>
+            )}
             {isCreator ? (
               <button
                 onClick={handleDelete}

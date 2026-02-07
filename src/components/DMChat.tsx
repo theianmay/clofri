@@ -4,30 +4,32 @@ import { useAuthStore } from '../stores/authStore'
 import { useDMStore } from '../stores/dmStore'
 import { useDMChat } from '../hooks/useDMChat'
 import { usePresenceStore } from '../stores/presenceStore'
-import { useFriendStore } from '../stores/friendStore'
-import { ArrowLeft, Send } from 'lucide-react'
+import { ArrowLeft, Send, PhoneOff } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
 
 export function DMChat() {
-  const { friendId } = useParams<{ friendId: string }>()
+  const { sessionId } = useParams<{ sessionId: string }>()
   const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
-  const { markRead } = useDMStore()
-  const { friends } = useFriendStore()
+  const { sessions, markRead, endSession } = useDMStore()
+
+  const session = sessions.find((s) => s.id === sessionId)
+  const friend = session?.friend
+  const friendId = session?.friendId || ''
+
   const { getStatus } = usePresenceStore()
 
-  const friend = friends.find((f) => f.friend.id === friendId)?.friend
-
   const { messages, typingUsers, sendMessage, sendTyping } = useDMChat({
-    friendId: friendId || '',
+    sessionId: sessionId || '',
+    friendId,
   })
 
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (friendId) markRead(friendId)
-  }, [friendId, markRead])
+    if (sessionId) markRead(sessionId)
+  }, [sessionId, markRead])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -45,9 +47,15 @@ export function DMChat() {
     sendTyping()
   }
 
-  if (!friendId) return null
+  const handleEndChat = async () => {
+    if (!sessionId || !confirm('End this conversation? All messages will be deleted.')) return
+    await endSession(sessionId)
+    navigate('/messages')
+  }
 
-  const status = getStatus(friendId)
+  if (!sessionId) return null
+
+  const status = friendId ? getStatus(friendId) : 'offline'
   const statusText = status === 'active' ? 'Active now' : status === 'idle' ? 'Idle' : 'Offline'
 
   return (
@@ -81,6 +89,13 @@ export function DMChat() {
             )}
           </p>
         </div>
+        <button
+          onClick={handleEndChat}
+          title="End conversation"
+          className="p-2 text-zinc-500 hover:text-red-400 hover:bg-zinc-800 rounded-lg transition-colors"
+        >
+          <PhoneOff className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Messages */}
@@ -129,13 +144,11 @@ export function DMChat() {
       </div>
 
       {/* Ephemeral notice */}
-      {messages.length > 0 && (
-        <div className="px-4 py-1">
-          <p className="text-zinc-700 text-[10px] text-center">
-            Messages are ephemeral — only the last 50 are shown
-          </p>
-        </div>
-      )}
+      <div className="px-4 py-1">
+        <p className="text-zinc-700 text-[10px] text-center">
+          This conversation is ephemeral — it ends when you close it
+        </p>
+      </div>
 
       {/* Input */}
       <form onSubmit={handleSend} className="p-4 border-t border-zinc-800">

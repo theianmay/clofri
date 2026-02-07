@@ -18,6 +18,7 @@ interface GroupState {
   kickMember: (groupId: string, userId: string) => Promise<void>
   markRead: (groupId: string) => void
   checkUnread: (groupIds: string[]) => Promise<void>
+  endGroupSession: (groupId: string) => Promise<void>
 }
 
 function getLastVisited(): Record<string, string> {
@@ -62,6 +63,7 @@ export const useGroupStore = create<GroupState>((set, get) => ({
         .from('groups')
         .select('*')
         .in('id', groupIds)
+        .eq('is_active', true)
 
       if (grpErr) { console.error('fetchGroups groups error:', grpErr); set({ loading: false }); return }
       if (!groups) { set({ groups: [], loading: false }); return }
@@ -169,6 +171,7 @@ export const useGroupStore = create<GroupState>((set, get) => ({
 
       if (findErr) console.error('joinGroup find error:', findErr)
       if (!group) return { error: 'Invalid invite code', groupId: null }
+      if (!(group as any).is_active) return { error: 'This group session has ended', groupId: null }
 
       // Try to insert — if already a member, the unique constraint will error
       const { error: insertErr } = await supabase
@@ -202,6 +205,16 @@ export const useGroupStore = create<GroupState>((set, get) => ({
       .eq('group_id', groupId)
       .eq('user_id', user.id)
 
+    await get().fetchGroups()
+  },
+
+  endGroupSession: async (groupId: string) => {
+    // Delete all messages for this group
+    await supabase.from('messages').delete().eq('group_id', groupId)
+    // Mark group as inactive
+    await supabase.from('groups').update({ is_active: false } as any).eq('id', groupId)
+    // Remove all members
+    await supabase.from('group_members').delete().eq('group_id', groupId)
     await get().fetchGroups()
   },
 
