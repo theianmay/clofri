@@ -1,7 +1,9 @@
 import { useEffect, useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useFriendStore } from '../stores/friendStore'
 import { usePresenceStore } from '../stores/presenceStore'
 import { useCategoryStore } from '../stores/categoryStore'
+import { useGroupStore } from '../stores/groupStore'
 import {
   UserPlus,
   Check,
@@ -13,6 +15,7 @@ import {
   Send,
   Tag,
   Plus,
+  MessageCircle,
 } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
 
@@ -31,6 +34,8 @@ export function Friends() {
   const { onlineUsers, getStatus } = usePresenceStore()
 
   const { categories, assignments, addCategory, removeCategory, assignFriend } = useCategoryStore()
+  const getOrCreateDM = useGroupStore((s) => s.getOrCreateDM)
+  const navigate = useNavigate()
 
   const [showAdd, setShowAdd] = useState(false)
   const [friendCode, setFriendCode] = useState('')
@@ -101,6 +106,11 @@ export function Friends() {
   const handleRemove = async (id: string) => {
     if (!confirm('Remove this friend?')) return
     await removeFriend(id)
+  }
+
+  const handleStartDM = async (friendId: string) => {
+    const groupId = await getOrCreateDM(friendId)
+    if (groupId) navigate(`/group/${groupId}`)
   }
 
   return (
@@ -352,6 +362,13 @@ export function Friends() {
                           )}
                         </div>
                         <button
+                          onClick={() => handleStartDM(friend.id)}
+                          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-blue-400 rounded-lg transition-all"
+                          title="Message"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleRemove(friendship.id)}
                           className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
                           title="Remove friend"
@@ -410,6 +427,13 @@ export function Friends() {
                             </div>
                           )}
                         </div>
+                        <button
+                          onClick={() => handleStartDM(friend.id)}
+                          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-blue-400 rounded-lg transition-all"
+                          title="Message"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleRemove(friendship.id)}
                           className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
@@ -479,6 +503,13 @@ export function Friends() {
                             </div>
                           )}
                         </div>
+                        <button
+                          onClick={() => handleStartDM(friend.id)}
+                          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-blue-400 rounded-lg transition-all"
+                          title="Message"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleRemove(friendship.id)}
                           className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"

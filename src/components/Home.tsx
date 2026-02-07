@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useGroupStore } from '../stores/groupStore'
+import { useGroupStore, isDMGroup, getDMOtherUserId } from '../stores/groupStore'
 import { useAuthStore } from '../stores/authStore'
-import { Plus, ArrowRight, Users, Loader2, Hash } from 'lucide-react'
+import { Plus, ArrowRight, Users, Loader2, Hash, User } from 'lucide-react'
 
 export function Home() {
   const { groups, loading, unreadGroups, fetchGroups, createGroup, joinGroupByCode } = useGroupStore()
@@ -157,6 +157,10 @@ export function Home() {
               const memberCount = group.members.length
               const isCreator = group.creator_id === profile?.id
               const hasUnread = unreadGroups.has(group.id)
+              const dm = isDMGroup(group.name)
+              const dmFriendId = dm && profile ? getDMOtherUserId(group.name, profile.id) : null
+              const dmFriend = dmFriendId ? group.members.find((m) => m.user_id === dmFriendId)?.profile : null
+              const displayName = dm ? (dmFriend?.display_name || 'Direct Message') : group.name
 
               return (
                 <button
@@ -168,7 +172,7 @@ export function Home() {
                 >
                   <div className="relative">
                     <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
-                      <MessageCircleIcon />
+                      {dm ? <User /> : <MessageCircleIcon />}
                     </div>
                     {hasUnread && (
                       <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-zinc-900" />
@@ -176,15 +180,20 @@ export function Home() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className={`font-medium truncate ${hasUnread ? 'text-white' : 'text-zinc-300'}`}>{group.name}</p>
-                      {isCreator && (
+                      <p className={`font-medium truncate ${hasUnread ? 'text-white' : 'text-zinc-300'}`}>{displayName}</p>
+                      {!dm && isCreator && (
                         <span className="text-[10px] bg-blue-600/20 text-blue-400 px-1.5 py-0.5 rounded font-medium">
                           Owner
                         </span>
                       )}
+                      {dm && (
+                        <span className="text-[10px] bg-zinc-700/50 text-zinc-400 px-1.5 py-0.5 rounded font-medium">
+                          DM
+                        </span>
+                      )}
                     </div>
                     <p className="text-zinc-500 text-sm">
-                      {memberCount} member{memberCount !== 1 ? 's' : ''}
+                      {dm ? 'Direct message' : `${memberCount} member${memberCount !== 1 ? 's' : ''}`}
                     </p>
                   </div>
                   <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />

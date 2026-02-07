@@ -18,6 +18,7 @@ interface GroupState {
   kickMember: (groupId: string, userId: string) => Promise<void>
   markRead: (groupId: string) => void
   checkUnread: (groupIds: string[]) => Promise<void>
+  getOrCreateDM: (friendId: string) => Promise<string | null>
 }
 
 function getLastVisited(): Record<string, string> {
@@ -30,6 +31,17 @@ function setLastVisited(groupId: string) {
   const data = getLastVisited()
   data[groupId] = new Date().toISOString()
   localStorage.setItem('clofri-last-visited', JSON.stringify(data))
+}
+
+export function isDMGroup(name: string): boolean {
+  return name.startsWith('dm:')
+}
+
+export function getDMOtherUserId(name: string, myId: string): string | null {
+  if (!isDMGroup(name)) return null
+  const parts = name.split(':')
+  if (parts.length !== 3) return null
+  return parts[1] === myId ? parts[2] : parts[1]
 }
 
 export const useGroupStore = create<GroupState>((set, get) => ({
@@ -121,6 +133,49 @@ export const useGroupStore = create<GroupState>((set, get) => ({
     }
 
     set({ unreadGroups: unread })
+  },
+
+  getOrCreateDM: async (friendId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return null
+
+      const sorted = [user.id, friendId].sort()
+      const dmName = `dm:${sorted[0]}:${sorted[1]}`
+
+      // Check if DM group already exists
+      const existing = get().groups.find((g) => g.name === dmName)
+      if (existing) return existing.id
+
+      // Create the DM group
+      const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase()
+      const { data: group, error } = await supabase
+        .from('groups')
+        .insert({ name: dmName, creator_id: user.id, invite_code: inviteCode } as any)
+        .select()
+        .single()
+
+      if (error || !group) {
+        console.error('getOrCreateDM create error:', error)
+        return null
+      }
+
+      // Add both users as members
+      const { error: memErr } = await supabase
+        .from('group_members')
+        .insert([
+          { group_id: (group as any).id, user_id: user.id, role: 'creator' },
+          { group_id: (group as any).id, user_id: friendId, role: 'member' },
+        ] as any)
+
+      if (memErr) console.error('getOrCreateDM member insert error:', memErr)
+
+      await get().fetchGroups()
+      return (group as any).id as string
+    } catch (err) {
+      console.error('getOrCreateDM unexpected error:', err)
+      return null
+    }
   },
 
   markRead: (groupId: string) => {
