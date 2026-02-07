@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/authStore'
 import { useDMStore } from '../stores/dmStore'
 import { useDMChat } from '../hooks/useDMChat'
 import { usePresenceStore } from '../stores/presenceStore'
-import { ArrowLeft, Send, PhoneOff } from 'lucide-react'
+import { ArrowLeft, Send, XCircle } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
 
 export function DMChat() {
@@ -94,7 +94,7 @@ export function DMChat() {
           title="End conversation"
           className="p-2 text-zinc-500 hover:text-red-400 hover:bg-zinc-800 rounded-lg transition-colors"
         >
-          <PhoneOff className="w-4 h-4" />
+          <XCircle className="w-4 h-4" />
         </button>
       </div>
 

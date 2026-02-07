@@ -126,11 +126,19 @@ export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
       // Optimistic local update
       setMessages((prev) => [...prev, msg].slice(-50))
 
-      // Broadcast to the other user
+      // Broadcast to the other user via DM channel
       channelRef.current.send({
         type: 'broadcast',
         event: 'message',
         payload: msg,
+      })
+
+      // Also notify via lobby channel so receiver gets sound/unread even if not in this chat
+      const lobbyChannel = supabase.channel('lobby')
+      lobbyChannel.send({
+        type: 'broadcast',
+        event: 'new_dm',
+        payload: { receiver_id: friendId, session_id: sessionId, sender_name: profile.display_name },
       })
 
       // Persist to DB

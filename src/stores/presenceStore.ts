@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
+import { playMessageSound, isSoundEnabled } from '../lib/sounds'
+import { useDMStore } from './dmStore'
 
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 const HEARTBEAT_INTERVAL_MS = 60 * 1000 // 60 seconds
@@ -90,6 +92,26 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
         resetIdleTimer()
       }
     }
+
+    // --- DM notification listener ---
+    channel.on('broadcast', { event: 'new_dm' }, ({ payload }) => {
+      if (payload.receiver_id === profile.id) {
+        // Check if user is currently viewing this DM session
+        const isViewingSession = window.location.pathname === `/dm/${payload.session_id}`
+        if (!isViewingSession) {
+          // Mark as unread
+          const dmState = useDMStore.getState()
+          const unread = new Set(dmState.unreadDMs)
+          unread.add(payload.session_id)
+          useDMStore.setState({ unreadDMs: unread })
+
+          // Play sound
+          if (isSoundEnabled()) {
+            playMessageSound()
+          }
+        }
+      }
+    })
 
     // --- Presence sync ---
     channel.on('presence', { event: 'sync' }, () => {
