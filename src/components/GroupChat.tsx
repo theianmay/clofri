@@ -93,7 +93,7 @@ export function GroupChat() {
         {/* Header */}
         <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-3">
           <button
-            onClick={() => navigate('/groups')}
+            onClick={() => navigate(dm ? '/messages' : '/groups')}
             className="text-zinc-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { MessageCircle, Users, LogOut, Copy, Check, Pencil, Menu, X, ChevronsLeft, Volume2, VolumeX } from 'lucide-react'
+import { MessageCircle, Users, LogOut, Copy, Check, Pencil, Menu, X, ChevronsLeft, Volume2, VolumeX, Mail } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { ConnectionBanner } from './ConnectionBanner'
 import { usePresenceStore } from '../stores/presenceStore'
@@ -115,6 +115,10 @@ export function Layout() {
             <Users className="w-4 h-4" />
             Friends
           </NavLink>
+          <NavLink to="/messages" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>
+            <Mail className="w-4 h-4" />
+            Messages
+          </NavLink>
           <NavLink to="/groups" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>
             <MessageCircle className="w-4 h-4" />
             Groups
@@ -176,6 +180,20 @@ export function Layout() {
           >
             <Users className="w-4 h-4 shrink-0" />
             {!collapsed && <span>Friends</span>}
+          </NavLink>
+          <NavLink
+            to="/messages"
+            title="Messages"
+            className={({ isActive }) =>
+              `flex items-center rounded-lg transition-colors ${
+                collapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'
+              } text-sm font-medium ${
+                isActive ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+              }`
+            }
+          >
+            <Mail className="w-4 h-4 shrink-0" />
+            {!collapsed && <span>Messages</span>}
           </NavLink>
           <NavLink
             to="/groups"
