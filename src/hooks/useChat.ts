@@ -26,7 +26,6 @@ interface UseChatOptions {
 
 export function useChat({ groupId }: UseChatOptions) {
   const profile = useAuthStore((s) => s.profile)
-  const getGlobalStatus = usePresenceStore((s) => s.getStatus)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [members, setMembers] = useState<PresenceMember[]>([])
   const [typingUsers, setTypingUsers] = useState<string[]>([])
@@ -121,7 +120,7 @@ export function useChat({ groupId }: UseChatOptions) {
             user_id: p.user_id,
             display_name: p.display_name,
             avatar_url: p.avatar_url,
-            status: getGlobalStatus(p.user_id),
+            status: usePresenceStore.getState().getStatus(p.user_id),
           })
         }
       }
