@@ -24,6 +24,7 @@
 - [ ] **Group session notifications** — Broadcast `group_ended` on lobby channel when creator ends a group session, so members are notified and auto-redirected (similar to DM ended flow).
 - [ ] **Group ephemeral UX polish** — Non-creators should also be able to leave/end their participation; clarify "End Session" vs "Delete Group" vs "Leave Group" actions.
 - [ ] **DM session ended toast/banner** — Show a brief "This conversation was ended" message before redirecting, instead of a silent redirect.
+- [ ] **UI / Layout redesign** - come up with the style, colors, and vibe. modern but also vintage, like an ode to the AIM/MSN Messengers of the world that are gone
 
 ---
 
