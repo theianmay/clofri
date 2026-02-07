@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useFriendStore } from '../stores/friendStore'
 import { usePresenceStore } from '../stores/presenceStore'
 import { useCategoryStore } from '../stores/categoryStore'
-import { useGroupStore } from '../stores/groupStore'
 import {
   UserPlus,
   Check,
@@ -34,7 +33,6 @@ export function Friends() {
   const { onlineUsers, getStatus } = usePresenceStore()
 
   const { categories, assignments, addCategory, removeCategory, assignFriend } = useCategoryStore()
-  const getOrCreateDM = useGroupStore((s) => s.getOrCreateDM)
   const navigate = useNavigate()
 
   const [showAdd, setShowAdd] = useState(false)
@@ -108,9 +106,8 @@ export function Friends() {
     await removeFriend(id)
   }
 
-  const handleStartDM = async (friendId: string) => {
-    const groupId = await getOrCreateDM(friendId)
-    if (groupId) navigate(`/group/${groupId}`)
+  const handleStartDM = (friendId: string) => {
+    navigate(`/dm/${friendId}`)
   }
 
   return (

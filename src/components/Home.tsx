@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useGroupStore, isDMGroup } from '../stores/groupStore'
+import { useGroupStore } from '../stores/groupStore'
 import { useAuthStore } from '../stores/authStore'
 import { Plus, ArrowRight, Users, Loader2, Hash } from 'lucide-react'
 
@@ -153,7 +153,7 @@ export function Home() {
           </div>
         ) : (
           <div className="space-y-2">
-            {groups.filter((g) => !isDMGroup(g.name)).map((group) => {
+            {groups.map((group) => {
               const memberCount = group.members.length
               const isCreator = group.creator_id === profile?.id
               const hasUnread = unreadGroups.has(group.id)

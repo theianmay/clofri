@@ -157,7 +157,14 @@ create policy "Members can view group members"
 create policy "Users can join groups"
   on public.group_members for insert
   to authenticated
-  with check (auth.uid() = user_id);
+  with check (
+    auth.uid() = user_id
+    or exists (
+      select 1 from public.groups
+      where groups.id = group_id
+      and groups.creator_id = auth.uid()
+    )
+  );
 
 create policy "Creators can manage members"
   on public.group_members for delete

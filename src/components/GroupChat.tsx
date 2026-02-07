@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useGroupStore, isDMGroup, getDMOtherUserId } from '../stores/groupStore'
+import { useGroupStore } from '../stores/groupStore'
 import { useAuthStore } from '../stores/authStore'
 import { useChat } from '../hooks/useChat'
 import {
@@ -79,11 +79,6 @@ export function GroupChat() {
   const isCreator = group?.creator_id === profile?.id
   const onlineUserIds = new Set(members.map((m) => m.user_id))
 
-  const dm = group ? isDMGroup(group.name) : false
-  const dmFriendId = dm && group && profile ? getDMOtherUserId(group.name, profile.id) : null
-  const dmFriend = dmFriendId ? group?.members.find((m) => m.user_id === dmFriendId)?.profile : null
-  const chatTitle = dm ? (dmFriend?.display_name || 'Direct Message') : (group?.name || 'Loading...')
-
   if (!groupId) return null
 
   return (
@@ -93,15 +88,15 @@ export function GroupChat() {
         {/* Header */}
         <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-3">
           <button
-            onClick={() => navigate(dm ? '/messages' : '/groups')}
+            onClick={() => navigate('/groups')}
             className="text-zinc-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex-1 min-w-0">
-            <h2 className="text-white font-semibold truncate">{chatTitle}</h2>
+            <h2 className="text-white font-semibold truncate">{group?.name || 'Loading...'}</h2>
             <p className="text-zinc-500 text-xs">
-              {dm ? (members.length > 0 ? 'Online' : 'Offline') : `${members.length} online`}
+              {members.length} online
               {typingUsers.length > 0 && (
                 <span className="text-blue-400 ml-2">
                   {typingUsers.join(', ')} typing...
@@ -109,18 +104,16 @@ export function GroupChat() {
               )}
             </p>
           </div>
-          {!dm && (
-            <button
-              onClick={() => setShowMembers(!showMembers)}
-              className={`p-2 rounded-lg transition-colors ${
-                showMembers
-                  ? 'bg-zinc-800 text-white'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
-              }`}
-            >
-              <Users className="w-5 h-5" />
-            </button>
-          )}
+          <button
+            onClick={() => setShowMembers(!showMembers)}
+            className={`p-2 rounded-lg transition-colors ${
+              showMembers
+                ? 'bg-zinc-800 text-white'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+            }`}
+          >
+            <Users className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Messages */}
@@ -206,25 +199,23 @@ export function GroupChat() {
             </p>
           </div>
 
-          {/* Invite code (groups only) */}
-          {!dm && (
-            <div className="p-3 border-b border-zinc-800">
-              <p className="text-zinc-500 text-xs mb-1.5">Invite code</p>
-              <button
-                onClick={handleCopyCode}
-                className="flex items-center gap-2 px-3 py-2 bg-zinc-800 rounded-lg w-full hover:bg-zinc-700 transition-colors"
-              >
-                <span className="font-mono text-sm text-white tracking-wider flex-1 text-left">
-                  {group?.invite_code}
-                </span>
-                {copied ? (
-                  <Check className="w-4 h-4 text-green-400" />
-                ) : (
-                  <Copy className="w-4 h-4 text-zinc-500" />
-                )}
-              </button>
-            </div>
-          )}
+          {/* Invite code */}
+          <div className="p-3 border-b border-zinc-800">
+            <p className="text-zinc-500 text-xs mb-1.5">Invite code</p>
+            <button
+              onClick={handleCopyCode}
+              className="flex items-center gap-2 px-3 py-2 bg-zinc-800 rounded-lg w-full hover:bg-zinc-700 transition-colors"
+            >
+              <span className="font-mono text-sm text-white tracking-wider flex-1 text-left">
+                {group?.invite_code}
+              </span>
+              {copied ? (
+                <Check className="w-4 h-4 text-green-400" />
+              ) : (
+                <Copy className="w-4 h-4 text-zinc-500" />
+              )}
+            </button>
+          </div>
 
           {/* Member list */}
           <div className="flex-1 overflow-y-auto p-3 space-y-1">

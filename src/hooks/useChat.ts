@@ -39,13 +39,14 @@ export function useChat({ groupId }: UseChatOptions) {
 
     // Fetch recent messages from DB
     const fetchHistory = async () => {
-      const { data } = await supabase
+      const { data, error: histErr } = await supabase
         .from('messages')
         .select('*')
         .eq('group_id', groupId)
         .order('created_at', { ascending: true })
         .limit(50)
 
+      if (histErr) console.error('fetchHistory error:', histErr)
       if (data) {
         // We need profiles for display names
         const userIds = [...new Set(data.map((m: any) => m.user_id))]
@@ -175,12 +176,13 @@ export function useChat({ groupId }: UseChatOptions) {
       })
 
       // Persist to DB
-      await supabase.from('messages').insert({
+      const { error: insertErr } = await supabase.from('messages').insert({
         id: msg.id,
         group_id: groupId,
         user_id: profile.id,
         text: msg.text,
       } as any)
+      if (insertErr) console.error('Message persist failed:', insertErr)
 
       // Reset typing state
       isTypingRef.current = false

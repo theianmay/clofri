@@ -7,6 +7,7 @@ import { usePresenceStore } from '../stores/presenceStore'
 import { AvatarIcon } from './AvatarIcon'
 import { AvatarPicker } from './AvatarPicker'
 import { isSoundEnabled, setSoundEnabled } from '../lib/sounds'
+import { useDMStore } from '../stores/dmStore'
 
 export function Layout() {
   const { profile, signOut, updateProfile } = useAuthStore()
@@ -78,6 +79,8 @@ export function Layout() {
   const presenceStatus = profile ? getStatus(profile.id) : 'offline'
   const statusColor = presenceStatus === 'active' ? 'bg-green-500' : presenceStatus === 'idle' ? 'bg-amber-400' : 'bg-zinc-600'
 
+  const unreadDMCount = useDMStore((s) => s.unreadDMs.size)
+
   return (
     <div className="min-h-screen bg-zinc-950 flex">
       {/* Mobile: hamburger + slide-out sidebar */}
@@ -116,7 +119,10 @@ export function Layout() {
             Friends
           </NavLink>
           <NavLink to="/messages" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>
-            <Mail className="w-4 h-4" />
+            <div className="relative">
+              <Mail className="w-4 h-4" />
+              {unreadDMCount > 0 && <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-blue-500 rounded-full" />}
+            </div>
             Messages
           </NavLink>
           <NavLink to="/groups" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>
@@ -192,7 +198,10 @@ export function Layout() {
               }`
             }
           >
-            <Mail className="w-4 h-4 shrink-0" />
+            <div className="relative shrink-0">
+              <Mail className="w-4 h-4" />
+              {unreadDMCount > 0 && <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-blue-500 rounded-full" />}
+            </div>
             {!collapsed && <span>Messages</span>}
           </NavLink>
           <NavLink

@@ -7,6 +7,7 @@ import { Home } from './components/Home'
 import { GroupChat } from './components/GroupChat'
 import { Friends } from './components/Friends'
 import { Messages } from './components/Messages'
+import { DMChat } from './components/DMChat'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Loader2 } from 'lucide-react'
 
@@ -36,6 +37,7 @@ function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<ErrorBoundary><Friends /></ErrorBoundary>} />
             <Route path="/messages" element={<ErrorBoundary><Messages /></ErrorBoundary>} />
+            <Route path="/dm/:friendId" element={<ErrorBoundary><DMChat /></ErrorBoundary>} />
             <Route path="/groups" element={<ErrorBoundary><Home /></ErrorBoundary>} />
             <Route path="/group/:groupId" element={<ErrorBoundary><GroupChat /></ErrorBoundary>} />
           </Route>
