@@ -21,7 +21,7 @@ export function GroupChat() {
   const { groupId } = useParams<{ groupId: string }>()
   const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
-  const { groups, fetchGroups, leaveGroup, deleteGroup, kickMember } = useGroupStore()
+  const { groups, fetchGroups, leaveGroup, deleteGroup, kickMember, markRead } = useGroupStore()
   const group = groups.find((g) => g.id === groupId)
 
   const { messages, members, typingUsers, sendMessage, sendTyping } = useChat({
@@ -36,6 +36,10 @@ export function GroupChat() {
   useEffect(() => {
     if (!group) fetchGroups()
   }, [group, fetchGroups])
+
+  useEffect(() => {
+    if (groupId) markRead(groupId)
+  }, [groupId, markRead])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

@@ -5,7 +5,7 @@ import { useAuthStore } from '../stores/authStore'
 import { Plus, ArrowRight, Users, Loader2, Hash } from 'lucide-react'
 
 export function Home() {
-  const { groups, loading, fetchGroups, createGroup, joinGroupByCode } = useGroupStore()
+  const { groups, loading, unreadGroups, fetchGroups, createGroup, joinGroupByCode } = useGroupStore()
   const profile = useAuthStore((s) => s.profile)
   const navigate = useNavigate()
 
@@ -156,19 +156,27 @@ export function Home() {
             {groups.map((group) => {
               const memberCount = group.members.length
               const isCreator = group.creator_id === profile?.id
+              const hasUnread = unreadGroups.has(group.id)
 
               return (
                 <button
                   key={group.id}
                   onClick={() => navigate(`/group/${group.id}`)}
-                  className="w-full flex items-center gap-4 p-4 bg-zinc-900 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-colors text-left group"
+                  className={`w-full flex items-center gap-4 p-4 bg-zinc-900 rounded-xl border transition-colors text-left group ${
+                    hasUnread ? 'border-blue-500/40' : 'border-zinc-800 hover:border-zinc-700'
+                  }`}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
-                    <MessageCircleIcon />
+                  <div className="relative">
+                    <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
+                      <MessageCircleIcon />
+                    </div>
+                    {hasUnread && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-zinc-900" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-white font-medium truncate">{group.name}</p>
+                      <p className={`font-medium truncate ${hasUnread ? 'text-white' : 'text-zinc-300'}`}>{group.name}</p>
                       {isCreator && (
                         <span className="text-[10px] bg-blue-600/20 text-blue-400 px-1.5 py-0.5 rounded font-medium">
                           Owner

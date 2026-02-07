@@ -14,11 +14,10 @@
 ## Short-term (validate with real users)
 
 - [ ] **Deploy** — Ship frontend to Vercel, test with 2-3 friend groups.
-- [ ] **Friend categorization** — Let users tag friends with categories (e.g. "family", "high school friends") and filter the friends list by category.
-- [ ] **Presence on home screen** — Show which friends are currently online in each group on the home screen (aggregate from Realtime Presence).
-- [ ] **Link previews** — Detect URLs in messages and render basic Open Graph previews.
-- [ ] **Unread indicator** — Lightweight dot on group cards when a group has new messages since you last visited (client-side only, no push).
-- [ ] **Sound/vibration** — Optional subtle notification sound when a message arrives in the active group.
+- [x] **Friend categorization** — Users can create custom categories, assign friends to them, and filter the friends list by category. Stored in localStorage for MVP.
+- [x] **Presence on home screen** — Friends page (home) shows active/idle/offline status for each friend via global lobby presence.
+- [x] **Unread indicator** — Blue dot on group cards when a group has new messages since last visit (client-side, localStorage timestamps).
+- [x] **Sound/vibration** — Subtle two-tone notification sound when a message arrives from others. Toggle in sidebar (Volume icon).
 
 ---
 
@@ -32,6 +31,7 @@
 - [ ] **Group avatars / customization** — Custom colors or icons per group.
 - [ ] **Google OAuth setup** — Configure Google Cloud Console OAuth client, add credentials to Supabase Auth providers. Currently only magic link email works.
 - [ ] **Discord / GitHub OAuth** — Additional login providers beyond Google + email.
+- [ ] **Link previews** — Detect URLs in messages and render basic Open Graph previews.
 - [ ] **Rate limiting** — Server-side message rate limiting (via Supabase Edge Functions or PartyKit).
 
 ---

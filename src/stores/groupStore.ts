@@ -9,17 +9,33 @@ export interface GroupWithMembers extends Group {
 interface GroupState {
   groups: GroupWithMembers[]
   loading: boolean
+  unreadGroups: Set<string>
   fetchGroups: () => Promise<void>
   createGroup: (name: string) => Promise<Group | null>
   joinGroupByCode: (code: string) => Promise<{ error: string | null; groupId: string | null }>
   leaveGroup: (groupId: string) => Promise<void>
   deleteGroup: (groupId: string) => Promise<void>
   kickMember: (groupId: string, userId: string) => Promise<void>
+  markRead: (groupId: string) => void
+  checkUnread: (groupIds: string[]) => Promise<void>
+}
+
+function getLastVisited(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem('clofri-last-visited') || '{}')
+  } catch { return {} }
+}
+
+function setLastVisited(groupId: string) {
+  const data = getLastVisited()
+  data[groupId] = new Date().toISOString()
+  localStorage.setItem('clofri-last-visited', JSON.stringify(data))
 }
 
 export const useGroupStore = create<GroupState>((set, get) => ({
   groups: [],
   loading: false,
+  unreadGroups: new Set(),
 
   fetchGroups: async () => {
     set({ loading: true })
@@ -72,10 +88,46 @@ export const useGroupStore = create<GroupState>((set, get) => ({
       }))
 
       set({ groups: groupsWithMembers, loading: false })
+
+      // Check for unread messages
+      await get().checkUnread(groupIds)
     } catch (err) {
       console.error('fetchGroups unexpected error:', err)
       set({ loading: false })
     }
+  },
+
+  checkUnread: async (groupIds: string[]) => {
+    if (groupIds.length === 0) return
+    const lastVisited = getLastVisited()
+    const unread = new Set<string>()
+
+    // Get latest message per group
+    for (const gid of groupIds) {
+      const { data } = await supabase
+        .from('messages')
+        .select('created_at')
+        .eq('group_id', gid)
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      if (data && data.length > 0) {
+        const lastMsg = (data[0] as any).created_at
+        const lastSeen = lastVisited[gid]
+        if (!lastSeen || new Date(lastMsg) > new Date(lastSeen)) {
+          unread.add(gid)
+        }
+      }
+    }
+
+    set({ unreadGroups: unread })
+  },
+
+  markRead: (groupId: string) => {
+    setLastVisited(groupId)
+    const unread = new Set(get().unreadGroups)
+    unread.delete(groupId)
+    set({ unreadGroups: unread })
   },
 
   createGroup: async (name: string) => {

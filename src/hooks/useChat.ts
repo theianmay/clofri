@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../stores/authStore'
 import { usePresenceStore, type UserStatus } from '../stores/presenceStore'
+import { playMessageSound, isSoundEnabled } from '../lib/sounds'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface ChatMessage {
@@ -85,6 +86,11 @@ export function useChat({ groupId }: UseChatOptions) {
         // Ring buffer: keep last 50
         return updated.slice(-50)
       })
+
+      // Play sound for messages from others
+      if (msg.user_id !== profile.id && isSoundEnabled()) {
+        playMessageSound()
+      }
     })
 
     // Listen for typing indicators

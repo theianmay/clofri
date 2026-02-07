@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useFriendStore } from '../stores/friendStore'
 import { usePresenceStore } from '../stores/presenceStore'
+import { useCategoryStore } from '../stores/categoryStore'
 import {
   UserPlus,
   Check,
@@ -10,6 +11,8 @@ import {
   Users,
   Clock,
   Send,
+  Tag,
+  Plus,
 } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
 
@@ -27,29 +30,48 @@ export function Friends() {
   } = useFriendStore()
   const { onlineUsers, getStatus } = usePresenceStore()
 
+  const { categories, assignments, addCategory, removeCategory, assignFriend } = useCategoryStore()
+
   const [showAdd, setShowAdd] = useState(false)
   const [friendCode, setFriendCode] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [filterCategory, setFilterCategory] = useState<string | null>(null)
+  const [showNewCategory, setShowNewCategory] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [tagMenuOpen, setTagMenuOpen] = useState<string | null>(null)
 
   useEffect(() => {
     fetchFriends()
   }, [fetchFriends])
 
-  // Split friends into active, idle, and offline groups
+  // Filter by category, then split into active/idle/offline
+  const filtered = useMemo(() => {
+    if (!filterCategory) return friends
+    return friends.filter((f) => assignments[f.friendship.id] === filterCategory)
+  }, [friends, filterCategory, assignments])
+
   const { activeFriends, idleFriends, offlineFriends } = useMemo(() => {
     const active: typeof friends = []
     const idle: typeof friends = []
     const offline: typeof friends = []
-    for (const f of friends) {
+    for (const f of filtered) {
       const status = getStatus(f.friend.id)
       if (status === 'active') active.push(f)
       else if (status === 'idle') idle.push(f)
       else offline.push(f)
     }
     return { activeFriends: active, idleFriends: idle, offlineFriends: offline }
-  }, [friends, onlineUsers])
+  }, [filtered, onlineUsers])
+
+  const handleAddCategory = () => {
+    const name = newCategoryName.trim()
+    if (!name) return
+    addCategory(name)
+    setNewCategoryName('')
+    setShowNewCategory(false)
+  }
 
   const handleSendRequest = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -142,6 +164,75 @@ export function Friends() {
         )}
       </div>
 
+      {/* Category filter bar */}
+      {friends.length > 0 && (
+        <div className="px-6 py-3 border-b border-zinc-800 flex items-center gap-2 flex-wrap">
+          <Tag className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+          <button
+            onClick={() => setFilterCategory(null)}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              !filterCategory ? 'bg-zinc-700 text-white' : 'bg-zinc-800/50 text-zinc-400 hover:text-white'
+            }`}
+          >
+            All
+          </button>
+          {categories.map((cat) => {
+            const count = friends.filter((f) => assignments[f.friendship.id] === cat.id).length
+            return (
+              <div key={cat.id} className="flex items-center gap-0.5">
+                <button
+                  onClick={() => setFilterCategory(filterCategory === cat.id ? null : cat.id)}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                    filterCategory === cat.id ? 'bg-zinc-700 text-white' : 'bg-zinc-800/50 text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${cat.color}`} />
+                  {cat.name}
+                  {count > 0 && <span className="text-zinc-500">{count}</span>}
+                </button>
+                <button
+                  onClick={() => { removeCategory(cat.id); if (filterCategory === cat.id) setFilterCategory(null) }}
+                  className="p-0.5 text-zinc-600 hover:text-red-400 transition-colors"
+                  title="Delete category"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )
+          })}
+          {showNewCategory ? (
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleAddCategory() }}
+              className="flex items-center gap-1"
+            >
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="Name..."
+                autoFocus
+                className="w-24 bg-zinc-800 text-white text-xs px-2 py-1 rounded-full border border-zinc-700 focus:border-blue-500 focus:outline-none"
+                maxLength={20}
+              />
+              <button type="submit" className="p-1 text-green-400 hover:text-green-300">
+                <Check className="w-3 h-3" />
+              </button>
+              <button type="button" onClick={() => { setShowNewCategory(false); setNewCategoryName('') }} className="p-1 text-zinc-500 hover:text-white">
+                <X className="w-3 h-3" />
+              </button>
+            </form>
+          ) : (
+            <button
+              onClick={() => setShowNewCategory(true)}
+              className="px-2 py-1 rounded-full text-xs text-zinc-500 hover:text-white bg-zinc-800/50 hover:bg-zinc-800 transition-colors flex items-center gap-1"
+            >
+              <Plus className="w-3 h-3" />
+              New
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
         {loading ? (
           <div className="flex items-center justify-center py-20">
@@ -223,30 +314,53 @@ export function Friends() {
                   Active — {activeFriends.length}
                 </h3>
                 <div className="space-y-1">
-                  {activeFriends.map(({ friendship, friend }) => (
-                    <div
-                      key={friendship.id}
-                      className="flex items-center gap-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800 group"
-                    >
-                      <div className="relative">
-                        <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} />
-                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-zinc-900" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium truncate">
-                          {friend.display_name}
-                        </p>
-                        <p className="text-green-400/70 text-xs">Active</p>
-                      </div>
-                      <button
-                        onClick={() => handleRemove(friendship.id)}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
-                        title="Remove friend"
+                  {activeFriends.map(({ friendship, friend }) => {
+                    const cat = categories.find((c) => c.id === assignments[friendship.id])
+                    return (
+                      <div
+                        key={friendship.id}
+                        className="flex items-center gap-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800 group"
                       >
-                        <UserMinus className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="relative">
+                          <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} />
+                          <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-zinc-900" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-white text-sm font-medium truncate">{friend.display_name}</p>
+                            {cat && <span className={`w-1.5 h-1.5 rounded-full ${cat.color} shrink-0`} title={cat.name} />}
+                          </div>
+                          <p className="text-green-400/70 text-xs">Active</p>
+                        </div>
+                        <div className="relative">
+                          <button
+                            onClick={() => setTagMenuOpen(tagMenuOpen === friendship.id ? null : friendship.id)}
+                            className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-zinc-300 rounded-lg transition-all"
+                            title="Set category"
+                          >
+                            <Tag className="w-3.5 h-3.5" />
+                          </button>
+                          {tagMenuOpen === friendship.id && (
+                            <div className="absolute right-0 top-full mt-1 z-20 bg-zinc-800 border border-zinc-700 rounded-lg py-1 min-w-[120px] shadow-xl">
+                              <button onClick={() => { assignFriend(friendship.id, null); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-700 text-left">None</button>
+                              {categories.map((c) => (
+                                <button key={c.id} onClick={() => { assignFriend(friendship.id, c.id); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-white hover:bg-zinc-700 text-left flex items-center gap-2">
+                                  <span className={`w-2 h-2 rounded-full ${c.color}`} /> {c.name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleRemove(friendship.id)}
+                          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
+                          title="Remove friend"
+                        >
+                          <UserMinus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )
+                  })}
                 </div>
               </section>
             )}
@@ -259,30 +373,53 @@ export function Friends() {
                   Idle — {idleFriends.length}
                 </h3>
                 <div className="space-y-1">
-                  {idleFriends.map(({ friendship, friend }) => (
-                    <div
-                      key={friendship.id}
-                      className="flex items-center gap-3 p-3 bg-zinc-900/80 rounded-xl border border-zinc-800 group"
-                    >
-                      <div className="relative">
-                        <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} />
-                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-amber-400 rounded-full border-2 border-zinc-900" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-zinc-300 text-sm font-medium truncate">
-                          {friend.display_name}
-                        </p>
-                        <p className="text-amber-400/70 text-xs">Idle</p>
-                      </div>
-                      <button
-                        onClick={() => handleRemove(friendship.id)}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
-                        title="Remove friend"
+                  {idleFriends.map(({ friendship, friend }) => {
+                    const cat = categories.find((c) => c.id === assignments[friendship.id])
+                    return (
+                      <div
+                        key={friendship.id}
+                        className="flex items-center gap-3 p-3 bg-zinc-900/80 rounded-xl border border-zinc-800 group"
                       >
-                        <UserMinus className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="relative">
+                          <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} />
+                          <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-amber-400 rounded-full border-2 border-zinc-900" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-zinc-300 text-sm font-medium truncate">{friend.display_name}</p>
+                            {cat && <span className={`w-1.5 h-1.5 rounded-full ${cat.color} shrink-0`} title={cat.name} />}
+                          </div>
+                          <p className="text-amber-400/70 text-xs">Idle</p>
+                        </div>
+                        <div className="relative">
+                          <button
+                            onClick={() => setTagMenuOpen(tagMenuOpen === friendship.id ? null : friendship.id)}
+                            className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-zinc-300 rounded-lg transition-all"
+                            title="Set category"
+                          >
+                            <Tag className="w-3.5 h-3.5" />
+                          </button>
+                          {tagMenuOpen === friendship.id && (
+                            <div className="absolute right-0 top-full mt-1 z-20 bg-zinc-800 border border-zinc-700 rounded-lg py-1 min-w-[120px] shadow-xl">
+                              <button onClick={() => { assignFriend(friendship.id, null); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-700 text-left">None</button>
+                              {categories.map((c) => (
+                                <button key={c.id} onClick={() => { assignFriend(friendship.id, c.id); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-white hover:bg-zinc-700 text-left flex items-center gap-2">
+                                  <span className={`w-2 h-2 rounded-full ${c.color}`} /> {c.name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleRemove(friendship.id)}
+                          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
+                          title="Remove friend"
+                        >
+                          <UserMinus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )
+                  })}
                 </div>
               </section>
             )}
@@ -305,30 +442,53 @@ export function Friends() {
                 <p className="text-zinc-600 text-xs px-1">Everyone's here!</p>
               ) : (
                 <div className="space-y-1">
-                  {offlineFriends.map(({ friendship, friend }) => (
-                    <div
-                      key={friendship.id}
-                      className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-xl border border-zinc-800/50 group"
-                    >
-                      <div className="relative">
-                        <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} className="opacity-50" />
-                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-zinc-600 rounded-full border-2 border-zinc-900" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-zinc-400 text-sm font-medium truncate">
-                          {friend.display_name}
-                        </p>
-                        <p className="text-zinc-600 text-xs">Offline</p>
-                      </div>
-                      <button
-                        onClick={() => handleRemove(friendship.id)}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
-                        title="Remove friend"
+                  {offlineFriends.map(({ friendship, friend }) => {
+                    const cat = categories.find((c) => c.id === assignments[friendship.id])
+                    return (
+                      <div
+                        key={friendship.id}
+                        className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-xl border border-zinc-800/50 group"
                       >
-                        <UserMinus className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="relative">
+                          <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} className="opacity-50" />
+                          <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-zinc-600 rounded-full border-2 border-zinc-900" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-zinc-400 text-sm font-medium truncate">{friend.display_name}</p>
+                            {cat && <span className={`w-1.5 h-1.5 rounded-full ${cat.color} shrink-0`} title={cat.name} />}
+                          </div>
+                          <p className="text-zinc-600 text-xs">Offline</p>
+                        </div>
+                        <div className="relative">
+                          <button
+                            onClick={() => setTagMenuOpen(tagMenuOpen === friendship.id ? null : friendship.id)}
+                            className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-zinc-300 rounded-lg transition-all"
+                            title="Set category"
+                          >
+                            <Tag className="w-3.5 h-3.5" />
+                          </button>
+                          {tagMenuOpen === friendship.id && (
+                            <div className="absolute right-0 top-full mt-1 z-20 bg-zinc-800 border border-zinc-700 rounded-lg py-1 min-w-[120px] shadow-xl">
+                              <button onClick={() => { assignFriend(friendship.id, null); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-700 text-left">None</button>
+                              {categories.map((c) => (
+                                <button key={c.id} onClick={() => { assignFriend(friendship.id, c.id); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-white hover:bg-zinc-700 text-left flex items-center gap-2">
+                                  <span className={`w-2 h-2 rounded-full ${c.color}`} /> {c.name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleRemove(friendship.id)}
+                          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
+                          title="Remove friend"
+                        >
+                          <UserMinus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </section>

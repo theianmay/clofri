@@ -1,11 +1,12 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { MessageCircle, Users, LogOut, Copy, Check, Pencil, Menu, X, ChevronsLeft } from 'lucide-react'
+import { MessageCircle, Users, LogOut, Copy, Check, Pencil, Menu, X, ChevronsLeft, Volume2, VolumeX } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { ConnectionBanner } from './ConnectionBanner'
 import { usePresenceStore } from '../stores/presenceStore'
 import { AvatarIcon } from './AvatarIcon'
 import { AvatarPicker } from './AvatarPicker'
+import { isSoundEnabled, setSoundEnabled } from '../lib/sounds'
 
 export function Layout() {
   const { profile, signOut, updateProfile } = useAuthStore()
@@ -22,6 +23,7 @@ export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('clofri-sidebar') === 'collapsed')
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
+  const [soundOn, setSoundOn] = useState(() => isSoundEnabled())
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const nameInputRef = useRef<HTMLInputElement>(null)
@@ -199,6 +201,13 @@ export function Layout() {
                 <AvatarIcon avatarUrl={profile?.avatar_url || null} displayName={profile?.display_name || ''} size="sm" />
                 <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColor} rounded-full border-2 border-zinc-900`} />
               </button>
+              <button
+                onClick={() => { const next = !soundOn; setSoundOn(next); setSoundEnabled(next) }}
+                className="p-2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                title={soundOn ? 'Mute sounds' : 'Unmute sounds'}
+              >
+                {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              </button>
               <button onClick={signOut} className="p-2 text-zinc-500 hover:text-zinc-300 transition-colors" title="Sign out">
                 <LogOut className="w-4 h-4" />
               </button>
@@ -255,13 +264,22 @@ export function Layout() {
                   </button>
                 </div>
               </div>
-              <button
-                onClick={signOut}
-                className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors w-full"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign out
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => { const next = !soundOn; setSoundOn(next); setSoundEnabled(next) }}
+                  className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors"
+                  title={soundOn ? 'Mute sounds' : 'Unmute sounds'}
+                >
+                  {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={signOut}
+                  className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors flex-1"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign out
+                </button>
+              </div>
             </>
           )}
         </div>
