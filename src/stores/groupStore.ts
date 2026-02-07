@@ -157,35 +157,39 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   },
 
   joinGroupByCode: async (code: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Not authenticated', groupId: null }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return { error: 'Not authenticated', groupId: null }
 
-    const { data: group } = await supabase
-      .from('groups')
-      .select('*')
-      .eq('invite_code', code.toUpperCase())
-      .single()
+      const { data: group, error: findErr } = await supabase
+        .from('groups')
+        .select('*')
+        .eq('invite_code', code.toUpperCase())
+        .single()
 
-    if (!group) return { error: 'Invalid invite code', groupId: null }
+      if (findErr) console.error('joinGroup find error:', findErr)
+      if (!group) return { error: 'Invalid invite code', groupId: null }
 
-    // Check if already a member
-    const { data: existing } = await supabase
-      .from('group_members')
-      .select('id')
-      .eq('group_id', (group as any).id)
-      .eq('user_id', user.id)
-      .single()
+      // Try to insert — if already a member, the unique constraint will error
+      const { error: insertErr } = await supabase
+        .from('group_members')
+        .insert({ group_id: (group as any).id, user_id: user.id, role: 'member' } as any)
 
-    if (existing) return { error: null, groupId: (group as any).id }
+      if (insertErr) {
+        // Unique constraint violation means already a member
+        if (insertErr.code === '23505') {
+          return { error: null, groupId: (group as any).id }
+        }
+        console.error('joinGroup insert error:', insertErr)
+        return { error: insertErr.message, groupId: null }
+      }
 
-    const { error } = await supabase
-      .from('group_members')
-      .insert({ group_id: (group as any).id, user_id: user.id, role: 'member' } as any)
-
-    if (error) return { error: error.message, groupId: null }
-
-    await get().fetchGroups()
-    return { error: null, groupId: (group as any).id }
+      await get().fetchGroups()
+      return { error: null, groupId: (group as any).id }
+    } catch (err) {
+      console.error('joinGroupByCode unexpected error:', err)
+      return { error: 'Something went wrong. Check console.', groupId: null }
+    }
   },
 
   leaveGroup: async (groupId: string) => {
