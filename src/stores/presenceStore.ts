@@ -110,6 +110,9 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
             playMessageSound()
           }
         }
+
+        // Always re-fetch sessions so new conversations appear immediately
+        useDMStore.getState().fetchSessions()
       }
     })
 
