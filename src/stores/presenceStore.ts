@@ -116,6 +116,14 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
       }
     })
 
+    // --- DM ended listener ---
+    channel.on('broadcast', { event: 'dm_ended' }, ({ payload }) => {
+      if (payload.other_user_id === profile.id) {
+        // Re-fetch sessions to remove the ended one
+        useDMStore.getState().fetchSessions()
+      }
+    })
+
     // --- Presence sync ---
     channel.on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState<PresenceUser>()

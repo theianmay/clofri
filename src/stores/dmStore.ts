@@ -155,6 +155,13 @@ export const useDMStore = create<DMState>((set, get) => ({
 
   endSession: async (sessionId: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Find the other user in this session
+      const session = get().sessions.find((s) => s.id === sessionId)
+      const otherUserId = session?.friendId
+
       // Delete all messages for this session
       await supabase.from('direct_messages').delete().eq('session_id', sessionId)
       // Mark session as inactive
@@ -162,6 +169,17 @@ export const useDMStore = create<DMState>((set, get) => ({
         .from('dm_sessions')
         .update({ is_active: false, ended_at: new Date().toISOString() } as never)
         .eq('id', sessionId)
+
+      // Notify the other user via lobby channel
+      if (otherUserId) {
+        const lobbyChannel = supabase.channel('lobby')
+        lobbyChannel.send({
+          type: 'broadcast',
+          event: 'dm_ended',
+          payload: { session_id: sessionId, ended_by: user.id, other_user_id: otherUserId },
+        })
+      }
+
       await get().fetchSessions()
     } catch (err) {
       console.error('endSession error:', err)

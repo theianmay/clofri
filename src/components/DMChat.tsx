@@ -31,6 +31,13 @@ export function DMChat() {
     if (sessionId) markRead(sessionId)
   }, [sessionId, markRead])
 
+  // Redirect if session was ended by the other user
+  useEffect(() => {
+    if (sessionId && sessions.length > 0 && !sessions.find((s) => s.id === sessionId)) {
+      navigate('/messages')
+    }
+  }, [sessionId, sessions, navigate])
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
