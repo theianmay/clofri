@@ -60,11 +60,16 @@ export function DMChat() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <AvatarIcon
-          avatarUrl={friend?.avatar_url || null}
-          displayName={friend?.display_name || 'Unknown'}
-          size="sm"
-        />
+        <div className="relative">
+          <AvatarIcon
+            avatarUrl={friend?.avatar_url || null}
+            displayName={friend?.display_name || 'Unknown'}
+            size="sm"
+          />
+          <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${
+            status === 'active' ? 'bg-green-500' : status === 'idle' ? 'bg-amber-400' : 'bg-zinc-600'
+          } rounded-full border-2 border-zinc-950`} />
+        </div>
         <div className="flex-1 min-w-0">
           <h2 className="text-white font-semibold truncate">
             {friend?.display_name || 'Loading...'}
