@@ -62,13 +62,13 @@ export function GroupChat() {
   const handleLeave = async () => {
     if (!groupId) return
     await leaveGroup(groupId)
-    navigate('/')
+    navigate('/groups')
   }
 
   const handleDelete = async () => {
     if (!groupId || !confirm('Delete this group? This cannot be undone.')) return
     await deleteGroup(groupId)
-    navigate('/')
+    navigate('/groups')
   }
 
   const isCreator = group?.creator_id === profile?.id
@@ -83,7 +83,7 @@ export function GroupChat() {
         {/* Header */}
         <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-3">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/groups')}
             className="text-zinc-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

@@ -1,11 +1,18 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { MessageCircle, Users, LogOut, Copy, Check, Pencil } from 'lucide-react'
+import { MessageCircle, Users, LogOut, Copy, Check, Pencil, Menu, X } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
+import { ConnectionBanner } from './ConnectionBanner'
 
 export function Layout() {
   const { profile, signOut, updateProfile } = useAuthStore()
   const [copied, setCopied] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const location = useLocation()
+
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [location.pathname])
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const nameInputRef = useRef<HTMLInputElement>(null)
@@ -44,14 +51,38 @@ export function Layout() {
 
   return (
     <div className="min-h-screen bg-zinc-950 flex">
+      {/* Mobile hamburger */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="md:hidden fixed top-3 left-3 z-40 p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col">
+      <aside className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col transform transition-transform duration-200 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="p-4 border-b border-zinc-800">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <MessageCircle className="w-4 h-4 text-white" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                <MessageCircle className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-white font-semibold text-lg">clofri</span>
             </div>
-            <span className="text-white font-semibold text-lg">clofri</span>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="md:hidden p-1 text-zinc-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
@@ -67,11 +98,11 @@ export function Layout() {
               }`
             }
           >
-            <MessageCircle className="w-4 h-4" />
-            Groups
+            <Users className="w-4 h-4" />
+            Friends
           </NavLink>
           <NavLink
-            to="/friends"
+            to="/groups"
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 isActive
@@ -80,8 +111,8 @@ export function Layout() {
               }`
             }
           >
-            <Users className="w-4 h-4" />
-            Friends
+            <MessageCircle className="w-4 h-4" />
+            Groups
           </NavLink>
         </nav>
 
@@ -148,7 +179,9 @@ export function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col md:ml-0 ml-0">
+        <div className="md:hidden h-12" />{/* spacer for mobile hamburger */}
+        <ConnectionBanner />
         <Outlet />
       </main>
     </div>

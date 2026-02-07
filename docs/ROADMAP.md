@@ -4,19 +4,18 @@
 
 ## Immediate (polish current MVP)
 
-- [ ] **Google OAuth setup** — Configure Google Cloud Console OAuth client, add credentials to Supabase Auth providers. Currently only magic link email works.
-- [ ] **Message cleanup cron** — Enable `pg_cron` extension in Supabase and schedule hourly deletion of messages older than 24 hours (SQL is in `supabase/schema.sql`, commented out).
-- [ ] **Responsive mobile layout** — Sidebar should collapse to a bottom nav or hamburger menu on small screens.
-- [ ] **Error boundaries** — Add React error boundaries so a component crash doesn't white-screen the whole app.
-- [ ] **Reconnection UX** — Show a banner when the Supabase Realtime connection drops and is reconnecting.
+- [x] **Message cleanup cron** — SQL ready in `supabase/enable_cleanup_cron.sql`. Run in Supabase SQL Editor after enabling pg_cron extension.
+- [x] **Responsive mobile layout** — Sidebar collapses to hamburger menu on mobile, with overlay and auto-close on navigation.
+- [x] **Error boundaries** — `ErrorBoundary` component wraps the app and each route individually.
+- [x] **Reconnection UX** — `ConnectionBanner` shows red/amber/green banners for disconnected/reconnecting/reconnected states.
 
 ---
 
 ## Short-term (validate with real users)
 
 - [ ] **Deploy** — Ship frontend to Vercel, test with 2-3 friend groups.
+- [ ] **Friend categorization** — Let users tag friends with categories (e.g. "family", "high school friends") and filter the friends list by category.
 - [ ] **Presence on home screen** — Show which friends are currently online in each group on the home screen (aggregate from Realtime Presence).
-- [ ] **Profile editing** — Let users change their display name and avatar after signup.
 - [ ] **Link previews** — Detect URLs in messages and render basic Open Graph previews.
 - [ ] **Unread indicator** — Lightweight dot on group cards when a group has new messages since you last visited (client-side only, no push).
 - [ ] **Sound/vibration** — Optional subtle notification sound when a message arrives in the active group.
@@ -30,6 +29,7 @@
 - [ ] **Media messages** — Image uploads via Supabase Storage, inline image rendering in chat.
 - [ ] **Message reactions** — Lightweight emoji reactions on messages.
 - [ ] **Group avatars / customization** — Custom colors or icons per group.
+- [ ] **Google OAuth setup** — Configure Google Cloud Console OAuth client, add credentials to Supabase Auth providers. Currently only magic link email works.
 - [ ] **Discord / GitHub OAuth** — Additional login providers beyond Google + email.
 - [ ] **Rate limiting** — Server-side message rate limiting (via Supabase Edge Functions or PartyKit).
 

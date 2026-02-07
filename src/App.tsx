@@ -6,6 +6,7 @@ import { Layout } from './components/Layout'
 import { Home } from './components/Home'
 import { GroupChat } from './components/GroupChat'
 import { Friends } from './components/Friends'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { Loader2 } from 'lucide-react'
 
 function App() {
@@ -28,15 +29,17 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/friends" element={<Friends />} />
-          <Route path="/group/:groupId" element={<GroupChat />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<ErrorBoundary><Friends /></ErrorBoundary>} />
+            <Route path="/groups" element={<ErrorBoundary><Home /></ErrorBoundary>} />
+            <Route path="/group/:groupId" element={<ErrorBoundary><GroupChat /></ErrorBoundary>} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 
