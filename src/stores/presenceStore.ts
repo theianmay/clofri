@@ -119,6 +119,11 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
     // --- DM ended listener ---
     channel.on('broadcast', { event: 'dm_ended' }, ({ payload }) => {
       if (payload.other_user_id === profile.id) {
+        // Play a notification sound
+        if (isSoundEnabled()) {
+          playMessageSound()
+        }
+
         // Re-fetch sessions to remove the ended one
         useDMStore.getState().fetchSessions()
       }

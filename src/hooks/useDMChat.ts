@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../stores/authStore'
+import { usePresenceStore } from '../stores/presenceStore'
 import { playMessageSound, isSoundEnabled } from '../lib/sounds'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -134,12 +135,14 @@ export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
       })
 
       // Also notify via lobby channel so receiver gets sound/unread even if not in this chat
-      const lobbyChannel = supabase.channel('lobby')
-      lobbyChannel.send({
-        type: 'broadcast',
-        event: 'new_dm',
-        payload: { receiver_id: friendId, session_id: sessionId, sender_name: profile.display_name },
-      })
+      const lobbyChannel = usePresenceStore.getState().channel
+      if (lobbyChannel) {
+        lobbyChannel.send({
+          type: 'broadcast',
+          event: 'new_dm',
+          payload: { receiver_id: friendId, session_id: sessionId, sender_name: profile.display_name },
+        })
+      }
 
       // Persist to DB
       const { error } = await supabase.from('direct_messages').insert({

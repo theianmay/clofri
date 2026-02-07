@@ -11,7 +11,7 @@ export function DMChat() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
-  const { sessions, markRead, endSession } = useDMStore()
+  const { sessions, hasFetched, markRead, endSession } = useDMStore()
 
   const session = sessions.find((s) => s.id === sessionId)
   const friend = session?.friend
@@ -33,10 +33,10 @@ export function DMChat() {
 
   // Redirect if session was ended by the other user
   useEffect(() => {
-    if (sessionId && sessions.length > 0 && !sessions.find((s) => s.id === sessionId)) {
+    if (sessionId && hasFetched && !sessions.find((s) => s.id === sessionId)) {
       navigate('/messages')
     }
-  }, [sessionId, sessions, navigate])
+  }, [sessionId, sessions, hasFetched, navigate])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

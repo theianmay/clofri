@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
+import { usePresenceStore } from './presenceStore'
 import type { Profile } from '../types/database'
 
 export interface DMSession {
@@ -27,20 +28,24 @@ interface DMState {
   sessions: DMSession[]
   unreadDMs: Set<string>
   loading: boolean
+  hasFetched: boolean
   fetchSessions: () => Promise<void>
   startSession: (friendId: string) => Promise<string | null>
   endSession: (sessionId: string) => Promise<void>
   markRead: (sessionId: string) => void
 }
 
+let _initialFetchDone = false
+
 export const useDMStore = create<DMState>((set, get) => ({
   sessions: [],
   unreadDMs: new Set(),
   loading: false,
+  hasFetched: false,
 
   fetchSessions: async () => {
-    // Only show loading spinner on initial fetch, not on polls
-    if (get().sessions.length === 0) set({ loading: true })
+    // Only show loading spinner on initial fetch, not on polls/refetches
+    if (!_initialFetchDone) set({ loading: true })
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -61,7 +66,10 @@ export const useDMStore = create<DMState>((set, get) => ({
       }
 
       if (!rawSessions || rawSessions.length === 0) {
-        set({ sessions: [], unreadDMs: new Set(), loading: false })
+        _initialFetchDone = true
+        if (get().sessions.length > 0 || !get().hasFetched) {
+          set({ sessions: [], unreadDMs: new Set(), loading: false, hasFetched: true })
+        }
         return
       }
 
@@ -108,10 +116,22 @@ export const useDMStore = create<DMState>((set, get) => ({
         }
       }
 
-      set({ sessions, unreadDMs: unread, loading: false })
+      _initialFetchDone = true
+
+      // Only update state if data actually changed to avoid re-render flicker
+      const prev = get()
+      const prevIds = prev.sessions.map((s) => s.id).join(',')
+      const newIds = sessions.map((s) => s.id).join(',')
+      const prevUnread = [...prev.unreadDMs].sort().join(',')
+      const newUnread = [...unread].sort().join(',')
+
+      if (prevIds !== newIds || prevUnread !== newUnread || prev.loading || !prev.hasFetched) {
+        set({ sessions, unreadDMs: unread, loading: false, hasFetched: true })
+      }
     } catch (err) {
       console.error('fetchSessions unexpected error:', err)
-      set({ loading: false })
+      _initialFetchDone = true
+      set({ loading: false, hasFetched: true })
     }
   },
 
@@ -171,14 +191,16 @@ export const useDMStore = create<DMState>((set, get) => ({
         .update({ is_active: false, ended_at: new Date().toISOString() } as never)
         .eq('id', sessionId)
 
-      // Notify the other user via lobby channel
+      // Notify the other user via the existing lobby channel
       if (otherUserId) {
-        const lobbyChannel = supabase.channel('lobby')
-        lobbyChannel.send({
-          type: 'broadcast',
-          event: 'dm_ended',
-          payload: { session_id: sessionId, ended_by: user.id, other_user_id: otherUserId },
-        })
+        const lobbyChannel = usePresenceStore.getState().channel
+        if (lobbyChannel) {
+          lobbyChannel.send({
+            type: 'broadcast',
+            event: 'dm_ended',
+            payload: { session_id: sessionId, ended_by: user.id, other_user_id: otherUserId },
+          })
+        }
       }
 
       await get().fetchSessions()
