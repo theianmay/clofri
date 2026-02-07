@@ -39,7 +39,8 @@ export const useDMStore = create<DMState>((set, get) => ({
   loading: false,
 
   fetchSessions: async () => {
-    set({ loading: true })
+    // Only show loading spinner on initial fetch, not on polls
+    if (get().sessions.length === 0) set({ loading: true })
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
