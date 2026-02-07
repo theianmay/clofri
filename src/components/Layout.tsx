@@ -3,9 +3,18 @@ import { useAuthStore } from '../stores/authStore'
 import { MessageCircle, Users, LogOut, Copy, Check, Pencil, Menu, X } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { ConnectionBanner } from './ConnectionBanner'
+import { usePresenceStore } from '../stores/presenceStore'
 
 export function Layout() {
   const { profile, signOut, updateProfile } = useAuthStore()
+  const { join: joinPresence, leave: leavePresence } = usePresenceStore()
+
+  useEffect(() => {
+    if (profile) {
+      joinPresence(profile)
+    }
+    return () => leavePresence()
+  }, [profile?.id])
   const [copied, setCopied] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()

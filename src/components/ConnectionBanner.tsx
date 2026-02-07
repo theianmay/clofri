@@ -1,60 +1,40 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { useState, useEffect, useRef } from 'react'
 import { WifiOff, Wifi } from 'lucide-react'
 
 export function ConnectionBanner() {
-  const [status, setStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('connected')
+  const [online, setOnline] = useState(navigator.onLine)
   const [showReconnected, setShowReconnected] = useState(false)
+  const wasOfflineRef = useRef(false)
 
   useEffect(() => {
-    const channel = supabase.channel('connection-monitor')
-
-    channel
-      .subscribe((state) => {
-        if (state === 'SUBSCRIBED') {
-          if (status === 'disconnected' || status === 'reconnecting') {
-            setShowReconnected(true)
-            setTimeout(() => setShowReconnected(false), 3000)
-          }
-          setStatus('connected')
-        } else if (state === 'CHANNEL_ERROR') {
-          setStatus('disconnected')
-        } else if (state === 'TIMED_OUT') {
-          setStatus('reconnecting')
-        }
-      })
+    const handleOffline = () => {
+      setOnline(false)
+      wasOfflineRef.current = true
+    }
 
     const handleOnline = () => {
-      if (status === 'disconnected') setStatus('reconnecting')
+      setOnline(true)
+      if (wasOfflineRef.current) {
+        setShowReconnected(true)
+        setTimeout(() => setShowReconnected(false), 3000)
+        wasOfflineRef.current = false
+      }
     }
-    const handleOffline = () => setStatus('disconnected')
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
 
-    if (!navigator.onLine) setStatus('disconnected')
-
     return () => {
-      supabase.removeChannel(channel)
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
   }, [])
 
-  if (status === 'disconnected') {
+  if (!online) {
     return (
       <div className="bg-red-600/90 text-white text-sm px-4 py-2 flex items-center justify-center gap-2">
         <WifiOff className="w-4 h-4" />
-        <span>Connection lost. Checking...</span>
-      </div>
-    )
-  }
-
-  if (status === 'reconnecting') {
-    return (
-      <div className="bg-amber-600/90 text-white text-sm px-4 py-2 flex items-center justify-center gap-2">
-        <WifiOff className="w-4 h-4 animate-pulse" />
-        <span>Reconnecting...</span>
+        <span>You're offline</span>
       </div>
     )
   }
@@ -63,7 +43,7 @@ export function ConnectionBanner() {
     return (
       <div className="bg-green-600/90 text-white text-sm px-4 py-2 flex items-center justify-center gap-2">
         <Wifi className="w-4 h-4" />
-        <span>Reconnected</span>
+        <span>Back online</span>
       </div>
     )
   }

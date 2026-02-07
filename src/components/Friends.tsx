@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useFriendStore } from '../stores/friendStore'
+import { usePresenceStore } from '../stores/presenceStore'
 import {
   UserPlus,
   Check,
@@ -23,6 +24,7 @@ export function Friends() {
     rejectRequest,
     removeFriend,
   } = useFriendStore()
+  const { onlineUsers, isOnline } = usePresenceStore()
 
   const [showAdd, setShowAdd] = useState(false)
   const [friendCode, setFriendCode] = useState('')
@@ -33,6 +35,13 @@ export function Friends() {
   useEffect(() => {
     fetchFriends()
   }, [fetchFriends])
+
+  // Split friends into online and offline, sorted
+  const { onlineFriends, offlineFriends } = useMemo(() => {
+    const online = friends.filter(({ friend }) => isOnline(friend.id))
+    const offline = friends.filter(({ friend }) => !isOnline(friend.id))
+    return { onlineFriends: online, offlineFriends: offline }
+  }, [friends, onlineUsers])
 
   const handleSendRequest = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,7 +81,11 @@ export function Friends() {
           <div>
             <h1 className="text-xl font-semibold text-white">Friends</h1>
             <p className="text-zinc-500 text-sm mt-1">
-              {friends.length} friend{friends.length !== 1 ? 's' : ''}
+              {onlineFriends.length > 0 && (
+                <span className="text-green-400">{onlineFriends.length} online</span>
+              )}
+              {onlineFriends.length > 0 && offlineFriends.length > 0 && ' · '}
+              {friends.length} total
             </p>
           </div>
           <button
@@ -202,10 +215,53 @@ export function Friends() {
               </section>
             )}
 
-            {/* Friends list */}
+            {/* Online friends */}
+            {onlineFriends.length > 0 && (
+              <section>
+                <h3 className="text-green-400 text-xs font-semibold uppercase tracking-wider mb-2 px-1 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-green-400" />
+                  Online — {onlineFriends.length}
+                </h3>
+                <div className="space-y-1">
+                  {onlineFriends.map(({ friendship, friend }) => (
+                    <div
+                      key={friendship.id}
+                      className="flex items-center gap-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800 group"
+                    >
+                      <div className="relative">
+                        <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-sm font-medium">
+                          {friend.avatar_url ? (
+                            <img src={friend.avatar_url} alt="" className="w-9 h-9 rounded-full" />
+                          ) : (
+                            friend.display_name[0]?.toUpperCase()
+                          )}
+                        </div>
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-zinc-900" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-medium truncate">
+                          {friend.display_name}
+                        </p>
+                        <p className="text-green-400/70 text-xs">Online</p>
+                      </div>
+                      <button
+                        onClick={() => handleRemove(friendship.id)}
+                        className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
+                        title="Remove friend"
+                      >
+                        <UserMinus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Offline friends */}
             <section>
-              <h3 className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2 px-1">
-                Friends
+              <h3 className="text-zinc-500 text-xs font-semibold uppercase tracking-wider mb-2 px-1 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-zinc-600" />
+                {onlineFriends.length > 0 ? `Offline — ${offlineFriends.length}` : `Friends — ${friends.length}`}
               </h3>
               {friends.length === 0 ? (
                 <div className="text-center py-12">
@@ -215,25 +271,30 @@ export function Friends() {
                     Share your friend code or add someone by theirs
                   </p>
                 </div>
+              ) : offlineFriends.length === 0 && onlineFriends.length > 0 ? (
+                <p className="text-zinc-600 text-xs px-1">Everyone's online!</p>
               ) : (
                 <div className="space-y-1">
-                  {friends.map(({ friendship, friend }) => (
+                  {offlineFriends.map(({ friendship, friend }) => (
                     <div
                       key={friendship.id}
-                      className="flex items-center gap-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800 group"
+                      className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-xl border border-zinc-800/50 group"
                     >
-                      <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-sm font-medium">
-                        {friend.avatar_url ? (
-                          <img src={friend.avatar_url} alt="" className="w-9 h-9 rounded-full" />
-                        ) : (
-                          friend.display_name[0]?.toUpperCase()
-                        )}
+                      <div className="relative">
+                        <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-600 text-sm font-medium">
+                          {friend.avatar_url ? (
+                            <img src={friend.avatar_url} alt="" className="w-9 h-9 rounded-full opacity-50" />
+                          ) : (
+                            friend.display_name[0]?.toUpperCase()
+                          )}
+                        </div>
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-zinc-600 rounded-full border-2 border-zinc-900" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium truncate">
+                        <p className="text-zinc-400 text-sm font-medium truncate">
                           {friend.display_name}
                         </p>
-                        <p className="text-zinc-600 text-xs font-mono">{friend.friend_code}</p>
+                        <p className="text-zinc-600 text-xs">Offline</p>
                       </div>
                       <button
                         onClick={() => handleRemove(friendship.id)}
