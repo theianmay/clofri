@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../stores/authStore'
+import { usePresenceStore, type UserStatus } from '../stores/presenceStore'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface ChatMessage {
@@ -16,7 +17,7 @@ export interface PresenceMember {
   user_id: string
   display_name: string
   avatar_url: string | null
-  status: 'active' | 'idle'
+  status: UserStatus
 }
 
 interface UseChatOptions {
@@ -25,6 +26,7 @@ interface UseChatOptions {
 
 export function useChat({ groupId }: UseChatOptions) {
   const profile = useAuthStore((s) => s.profile)
+  const getGlobalStatus = usePresenceStore((s) => s.getStatus)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [members, setMembers] = useState<PresenceMember[]>([])
   const [typingUsers, setTypingUsers] = useState<string[]>([])
@@ -102,24 +104,24 @@ export function useChat({ groupId }: UseChatOptions) {
       }, 3000)
     })
 
-    // Presence sync
+    // Presence sync — use global lobby status for each member
     channel.on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState<{
         user_id: string
         display_name: string
         avatar_url: string | null
-        status: 'active' | 'idle'
       }>()
 
       const memberList: PresenceMember[] = []
       for (const key in state) {
         const presences = state[key]
         if (presences && presences.length > 0) {
+          const p = presences[0]
           memberList.push({
-            user_id: presences[0].user_id,
-            display_name: presences[0].display_name,
-            avatar_url: presences[0].avatar_url,
-            status: presences[0].status,
+            user_id: p.user_id,
+            display_name: p.display_name,
+            avatar_url: p.avatar_url,
+            status: getGlobalStatus(p.user_id),
           })
         }
       }
@@ -132,7 +134,6 @@ export function useChat({ groupId }: UseChatOptions) {
           user_id: profile.id,
           display_name: profile.display_name,
           avatar_url: profile.avatar_url,
-          status: 'active',
         })
       }
     })

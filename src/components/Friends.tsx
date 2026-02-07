@@ -24,7 +24,7 @@ export function Friends() {
     rejectRequest,
     removeFriend,
   } = useFriendStore()
-  const { onlineUsers, isOnline } = usePresenceStore()
+  const { onlineUsers, getStatus } = usePresenceStore()
 
   const [showAdd, setShowAdd] = useState(false)
   const [friendCode, setFriendCode] = useState('')
@@ -36,11 +36,18 @@ export function Friends() {
     fetchFriends()
   }, [fetchFriends])
 
-  // Split friends into online and offline, sorted
-  const { onlineFriends, offlineFriends } = useMemo(() => {
-    const online = friends.filter(({ friend }) => isOnline(friend.id))
-    const offline = friends.filter(({ friend }) => !isOnline(friend.id))
-    return { onlineFriends: online, offlineFriends: offline }
+  // Split friends into active, idle, and offline groups
+  const { activeFriends, idleFriends, offlineFriends } = useMemo(() => {
+    const active: typeof friends = []
+    const idle: typeof friends = []
+    const offline: typeof friends = []
+    for (const f of friends) {
+      const status = getStatus(f.friend.id)
+      if (status === 'active') active.push(f)
+      else if (status === 'idle') idle.push(f)
+      else offline.push(f)
+    }
+    return { activeFriends: active, idleFriends: idle, offlineFriends: offline }
   }, [friends, onlineUsers])
 
   const handleSendRequest = async (e: React.FormEvent) => {
@@ -81,10 +88,14 @@ export function Friends() {
           <div>
             <h1 className="text-xl font-semibold text-white">Friends</h1>
             <p className="text-zinc-500 text-sm mt-1">
-              {onlineFriends.length > 0 && (
-                <span className="text-green-400">{onlineFriends.length} online</span>
+              {activeFriends.length > 0 && (
+                <span className="text-green-400">{activeFriends.length} active</span>
               )}
-              {onlineFriends.length > 0 && offlineFriends.length > 0 && ' · '}
+              {activeFriends.length > 0 && idleFriends.length > 0 && ' · '}
+              {idleFriends.length > 0 && (
+                <span className="text-amber-400">{idleFriends.length} idle</span>
+              )}
+              {(activeFriends.length > 0 || idleFriends.length > 0) && ' · '}
               {friends.length} total
             </p>
           </div>
@@ -215,15 +226,15 @@ export function Friends() {
               </section>
             )}
 
-            {/* Online friends */}
-            {onlineFriends.length > 0 && (
+            {/* Active friends */}
+            {activeFriends.length > 0 && (
               <section>
                 <h3 className="text-green-400 text-xs font-semibold uppercase tracking-wider mb-2 px-1 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-green-400" />
-                  Online — {onlineFriends.length}
+                  Active — {activeFriends.length}
                 </h3>
                 <div className="space-y-1">
-                  {onlineFriends.map(({ friendship, friend }) => (
+                  {activeFriends.map(({ friendship, friend }) => (
                     <div
                       key={friendship.id}
                       className="flex items-center gap-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800 group"
@@ -242,7 +253,49 @@ export function Friends() {
                         <p className="text-white text-sm font-medium truncate">
                           {friend.display_name}
                         </p>
-                        <p className="text-green-400/70 text-xs">Online</p>
+                        <p className="text-green-400/70 text-xs">Active</p>
+                      </div>
+                      <button
+                        onClick={() => handleRemove(friendship.id)}
+                        className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
+                        title="Remove friend"
+                      >
+                        <UserMinus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Idle friends */}
+            {idleFriends.length > 0 && (
+              <section>
+                <h3 className="text-amber-400 text-xs font-semibold uppercase tracking-wider mb-2 px-1 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  Idle — {idleFriends.length}
+                </h3>
+                <div className="space-y-1">
+                  {idleFriends.map(({ friendship, friend }) => (
+                    <div
+                      key={friendship.id}
+                      className="flex items-center gap-3 p-3 bg-zinc-900/80 rounded-xl border border-zinc-800 group"
+                    >
+                      <div className="relative">
+                        <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-sm font-medium">
+                          {friend.avatar_url ? (
+                            <img src={friend.avatar_url} alt="" className="w-9 h-9 rounded-full opacity-75" />
+                          ) : (
+                            friend.display_name[0]?.toUpperCase()
+                          )}
+                        </div>
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-amber-400 rounded-full border-2 border-zinc-900" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-zinc-300 text-sm font-medium truncate">
+                          {friend.display_name}
+                        </p>
+                        <p className="text-amber-400/70 text-xs">Idle</p>
                       </div>
                       <button
                         onClick={() => handleRemove(friendship.id)}
@@ -261,7 +314,7 @@ export function Friends() {
             <section>
               <h3 className="text-zinc-500 text-xs font-semibold uppercase tracking-wider mb-2 px-1 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-zinc-600" />
-                {onlineFriends.length > 0 ? `Offline — ${offlineFriends.length}` : `Friends — ${friends.length}`}
+                {(activeFriends.length > 0 || idleFriends.length > 0) ? `Offline — ${offlineFriends.length}` : `Friends — ${friends.length}`}
               </h3>
               {friends.length === 0 ? (
                 <div className="text-center py-12">
@@ -271,8 +324,8 @@ export function Friends() {
                     Share your friend code or add someone by theirs
                   </p>
                 </div>
-              ) : offlineFriends.length === 0 && onlineFriends.length > 0 ? (
-                <p className="text-zinc-600 text-xs px-1">Everyone's online!</p>
+              ) : offlineFriends.length === 0 ? (
+                <p className="text-zinc-600 text-xs px-1">Everyone's here!</p>
               ) : (
                 <div className="space-y-1">
                   {offlineFriends.map(({ friendship, friend }) => (
