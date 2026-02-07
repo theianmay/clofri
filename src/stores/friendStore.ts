@@ -81,41 +81,49 @@ export const useFriendStore = create<FriendState>((set, get) => ({
   },
 
   sendRequest: async (friendCode: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Not authenticated' }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return { error: 'Not authenticated' }
 
-    // Find user by friend code
-    const { data: target } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('friend_code', friendCode.toUpperCase())
-      .single()
+      // Find user by friend code
+      const { data: target, error: findErr } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('friend_code', friendCode.toUpperCase())
+        .single()
 
-    if (!target) return { error: 'No user found with that friend code' }
-    if ((target as any).id === user.id) return { error: "You can't add yourself" }
+      if (findErr) console.error('sendRequest find profile error:', findErr)
+      if (!target) return { error: 'No user found with that friend code' }
+      if ((target as any).id === user.id) return { error: "You can't add yourself" }
 
-    // Check if friendship already exists
-    const { data: existing } = await supabase
-      .from('friendships')
-      .select('*')
-      .or(
-        `and(requester_id.eq.${user.id},addressee_id.eq.${(target as any).id}),and(requester_id.eq.${(target as any).id},addressee_id.eq.${user.id})`
-      )
+      // Check if friendship already exists
+      const { data: existing, error: checkErr } = await supabase
+        .from('friendships')
+        .select('*')
+        .or(
+          `and(requester_id.eq.${user.id},addressee_id.eq.${(target as any).id}),and(requester_id.eq.${(target as any).id},addressee_id.eq.${user.id})`
+        )
 
-    if (existing && existing.length > 0) {
-      const f = existing[0] as any
-      if (f.status === 'accepted') return { error: 'Already friends' }
-      if (f.status === 'pending') return { error: 'Request already pending' }
+      if (checkErr) console.error('sendRequest check existing error:', checkErr)
+
+      if (existing && existing.length > 0) {
+        const f = existing[0] as any
+        if (f.status === 'accepted') return { error: 'Already friends' }
+        if (f.status === 'pending') return { error: 'Request already pending' }
+      }
+
+      const { error } = await supabase
+        .from('friendships')
+        .insert({ requester_id: user.id, addressee_id: (target as any).id } as any)
+
+      if (error) { console.error('sendRequest insert error:', error); return { error: error.message } }
+
+      await get().fetchFriends()
+      return { error: null }
+    } catch (err) {
+      console.error('sendRequest unexpected error:', err)
+      return { error: 'Something went wrong. Check console for details.' }
     }
-
-    const { error } = await supabase
-      .from('friendships')
-      .insert({ requester_id: user.id, addressee_id: (target as any).id } as any)
-
-    if (error) return { error: error.message }
-
-    await get().fetchFriends()
-    return { error: null }
   },
 
   acceptRequest: async (friendshipId: string) => {

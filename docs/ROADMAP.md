@@ -14,7 +14,7 @@
 ## Short-term (validate with real users)
 
 - [ ] **Deploy** — Ship frontend to Vercel, test with 2-3 friend groups.
-- [x] **Friend categorization** — Users can create custom categories, assign friends to them, and filter the friends list by category. Stored in localStorage for MVP.
+- [x] **Friend categorization** — Users can create custom categories, assign friends to them, and filter the friends list by category. Stored in localStorage for MVP. *(Future: migrate to Supabase tables for cross-device sync.)*
 - [x] **Presence on home screen** — Friends page (home) shows active/idle/offline status for each friend via global lobby presence.
 - [x] **Unread indicator** — Blue dot on group cards when a group has new messages since last visit (client-side, localStorage timestamps).
 - [x] **Sound/vibration** — Subtle two-tone notification sound when a message arrives from others. Toggle in sidebar (Volume icon).
