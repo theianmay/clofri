@@ -15,6 +15,7 @@ import {
   Trash2,
   Circle,
 } from 'lucide-react'
+import { AvatarIcon } from './AvatarIcon'
 
 export function GroupChat() {
   const { groupId } = useParams<{ groupId: string }>()
@@ -126,13 +127,7 @@ export function GroupChat() {
                 className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}
               >
                 {!isOwn && (
-                  <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs font-medium shrink-0">
-                    {msg.avatar_url ? (
-                      <img src={msg.avatar_url} alt="" className="w-8 h-8 rounded-full" />
-                    ) : (
-                      msg.display_name[0]?.toUpperCase()
-                    )}
-                  </div>
+                  <AvatarIcon avatarUrl={msg.avatar_url} displayName={msg.display_name} size="sm" className="shrink-0" />
                 )}
                 <div className={`max-w-[70%] ${isOwn ? 'text-right' : ''}`}>
                   {!isOwn && (
@@ -231,17 +226,7 @@ export function GroupChat() {
                   className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-zinc-800/50 group"
                 >
                   <div className="relative">
-                    <div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs font-medium">
-                      {member.profile?.avatar_url ? (
-                        <img
-                          src={member.profile.avatar_url}
-                          alt=""
-                          className="w-7 h-7 rounded-full"
-                        />
-                      ) : (
-                        member.profile?.display_name?.[0]?.toUpperCase()
-                      )}
-                    </div>
+                    <AvatarIcon avatarUrl={member.profile?.avatar_url || null} displayName={member.profile?.display_name || ''} size="sm" />
                     <Circle
                       className={`w-2.5 h-2.5 absolute -bottom-0.5 -right-0.5 ${
                         isOnline ? 'text-green-500 fill-green-500' : 'text-zinc-600 fill-zinc-600'

@@ -26,6 +26,7 @@
 
 - [ ] **Migrate to Stack B (PartyKit)** — Move real-time layer to PartyKit for server-side room logic, rate limiting, and idle detection. Keep Supabase for auth + persistent data. See `docs/ALTERNATIVES.md` for full evaluation.
 - [ ] **Push notifications** — Opt-in "your group is active" nudges via web push or service worker.
+- [ ] **Custom avatar uploads** — Allow users to upload their own avatar images via Supabase Storage (currently using predefined icon avatars).
 - [ ] **Media messages** — Image uploads via Supabase Storage, inline image rendering in chat.
 - [ ] **Message reactions** — Lightweight emoji reactions on messages.
 - [ ] **Group avatars / customization** — Custom colors or icons per group.

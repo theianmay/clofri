@@ -11,6 +11,7 @@ import {
   Clock,
   Send,
 } from 'lucide-react'
+import { AvatarIcon } from './AvatarIcon'
 
 export function Friends() {
   const {
@@ -160,13 +161,7 @@ export function Friends() {
                       key={friendship.id}
                       className="flex items-center gap-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800"
                     >
-                      <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-sm font-medium">
-                        {friend.avatar_url ? (
-                          <img src={friend.avatar_url} alt="" className="w-9 h-9 rounded-full" />
-                        ) : (
-                          friend.display_name[0]?.toUpperCase()
-                        )}
-                      </div>
+                      <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} />
                       <div className="flex-1 min-w-0">
                         <p className="text-white text-sm font-medium truncate">
                           {friend.display_name}
@@ -205,13 +200,7 @@ export function Friends() {
                       key={friendship.id}
                       className="flex items-center gap-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800"
                     >
-                      <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-sm font-medium">
-                        {friend.avatar_url ? (
-                          <img src={friend.avatar_url} alt="" className="w-9 h-9 rounded-full" />
-                        ) : (
-                          friend.display_name[0]?.toUpperCase()
-                        )}
-                      </div>
+                      <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} />
                       <div className="flex-1 min-w-0">
                         <p className="text-white text-sm font-medium truncate">
                           {friend.display_name}
@@ -240,13 +229,7 @@ export function Friends() {
                       className="flex items-center gap-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800 group"
                     >
                       <div className="relative">
-                        <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-sm font-medium">
-                          {friend.avatar_url ? (
-                            <img src={friend.avatar_url} alt="" className="w-9 h-9 rounded-full" />
-                          ) : (
-                            friend.display_name[0]?.toUpperCase()
-                          )}
-                        </div>
+                        <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} />
                         <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-zinc-900" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -282,13 +265,7 @@ export function Friends() {
                       className="flex items-center gap-3 p-3 bg-zinc-900/80 rounded-xl border border-zinc-800 group"
                     >
                       <div className="relative">
-                        <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-sm font-medium">
-                          {friend.avatar_url ? (
-                            <img src={friend.avatar_url} alt="" className="w-9 h-9 rounded-full opacity-75" />
-                          ) : (
-                            friend.display_name[0]?.toUpperCase()
-                          )}
-                        </div>
+                        <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} />
                         <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-amber-400 rounded-full border-2 border-zinc-900" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -334,13 +311,7 @@ export function Friends() {
                       className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-xl border border-zinc-800/50 group"
                     >
                       <div className="relative">
-                        <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-600 text-sm font-medium">
-                          {friend.avatar_url ? (
-                            <img src={friend.avatar_url} alt="" className="w-9 h-9 rounded-full opacity-50" />
-                          ) : (
-                            friend.display_name[0]?.toUpperCase()
-                          )}
-                        </div>
+                        <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} className="opacity-50" />
                         <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-zinc-600 rounded-full border-2 border-zinc-900" />
                       </div>
                       <div className="flex-1 min-w-0">
