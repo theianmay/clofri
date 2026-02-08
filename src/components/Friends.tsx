@@ -28,6 +28,7 @@ function FriendCard({
   friendship,
   friend,
   status,
+  statusMessage,
   isOffline,
   tagMenuOpen,
   setTagMenuOpen,
@@ -39,6 +40,7 @@ function FriendCard({
   friendship: Friendship
   friend: Profile
   status: UserStatus
+  statusMessage: string | null
   isOffline: boolean
   tagMenuOpen: string | null
   setTagMenuOpen: (id: string | null) => void
@@ -72,6 +74,11 @@ function FriendCard({
           {friend.display_name}
         </p>
         <p className={`text-xs ${statusTextColor}`}>{statusText}</p>
+        {statusMessage && (
+          <p className="text-zinc-500 text-xs italic truncate" title={statusMessage}>
+            "{statusMessage}"
+          </p>
+        )}
       </div>
       <div className="relative" data-tag-menu>
         <button
@@ -122,7 +129,7 @@ export function Friends() {
     rejectRequest,
     removeFriend,
   } = useFriendStore()
-  const { onlineUsers, getStatus } = usePresenceStore()
+  const { onlineUsers, getStatus, getStatusMessage } = usePresenceStore()
 
   const { categories, assignments, addCategory, removeCategory, assignFriend } = useCategoryStore()
   const startSession = useDMStore((s) => s.startSession)
@@ -530,6 +537,7 @@ export function Friends() {
                             friendship={friendship}
                             friend={friend}
                             status={status}
+                            statusMessage={getStatusMessage(friend.id)}
                             isOffline={isOffline}
                             tagMenuOpen={tagMenuOpen}
                             setTagMenuOpen={setTagMenuOpen}
@@ -575,6 +583,7 @@ export function Friends() {
                           friendship={friendship}
                           friend={friend}
                           status={status}
+                          statusMessage={getStatusMessage(friend.id)}
                           isOffline={isOffline}
                           tagMenuOpen={tagMenuOpen}
                           setTagMenuOpen={setTagMenuOpen}

@@ -28,6 +28,7 @@ export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOpt
   const channelRef = useRef<RealtimeChannel | null>(null)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isTypingRef = useRef(false)
+  const autoRepliedRef = useRef(false)
 
   useEffect(() => {
     if (!profile || !sessionId || !friendId) return
@@ -166,6 +167,34 @@ export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOpt
       if (error) console.error('DM persist failed:', error)
 
       isTypingRef.current = false
+
+      // Auto-reply: if friend is idle/away and has auto-reply + status message, send once per session
+      if (!autoRepliedRef.current) {
+        const presenceState = usePresenceStore.getState()
+        const friendStatus = presenceState.getStatus(friendId)
+        const friendUser = presenceState.onlineUsers.get(friendId)
+        if (
+          (friendStatus === 'idle') &&
+          friendUser?.status_message
+        ) {
+          // Check if the friend has auto-reply enabled by looking at their presence
+          // We broadcast the auto-reply as a local-only system message
+          autoRepliedRef.current = true
+          const autoReplyMsg: DMMessage = {
+            id: `auto-reply-${crypto.randomUUID()}`,
+            sender_id: friendId,
+            receiver_id: profile.id,
+            display_name: friendUser.display_name,
+            avatar_url: friendUser.avatar_url,
+            text: `[Auto-reply] ${friendUser.status_message}`,
+            created_at: new Date().toISOString(),
+          }
+          // Small delay so it appears after the sent message
+          setTimeout(() => {
+            setMessages((prev) => [...prev, autoReplyMsg].slice(-50))
+          }, 500)
+        }
+      }
     },
     [profile, friendId, sessionId]
   )

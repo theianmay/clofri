@@ -16,12 +16,18 @@ export interface PresenceUser {
   avatar_url: string | null
   status: UserStatus
   last_active: string
+  status_message: string | null
 }
 
 interface PresenceState {
   onlineUsers: Map<string, PresenceUser>
   channel: RealtimeChannel | null
+  statusMessage: string | null
+  autoReply: boolean
   getStatus: (userId: string) => UserStatus
+  getStatusMessage: (userId: string) => string | null
+  setStatusMessage: (message: string | null) => void
+  setAutoReply: (enabled: boolean) => void
   join: (profile: { id: string; display_name: string; avatar_url: string | null }) => void
   leave: () => void
 }
@@ -37,11 +43,51 @@ function resolveStatus(user: PresenceUser): UserStatus {
 export const usePresenceStore = create<PresenceState>((set, get) => ({
   onlineUsers: new Map(),
   channel: null,
+  statusMessage: null,
+  autoReply: false,
 
   getStatus: (userId: string) => {
     const user = get().onlineUsers.get(userId)
     if (!user) return 'offline'
     return resolveStatus(user)
+  },
+
+  getStatusMessage: (userId: string) => {
+    const user = get().onlineUsers.get(userId)
+    return user?.status_message || null
+  },
+
+  setStatusMessage: (message: string | null) => {
+    const trimmed = message?.trim() || null
+    set({ statusMessage: trimmed })
+    // Re-track with updated status message
+    const { channel } = get()
+    if (channel) {
+      const state = channel.presenceState<PresenceUser>()
+      // Find our own presence key to get current tracked data
+      for (const key in state) {
+        const presences = state[key]
+        if (presences && presences.length > 0) {
+          const p = presences[0]
+          // Only re-track our own presence
+          if (key === p.user_id) {
+            channel.track({
+              user_id: p.user_id,
+              display_name: p.display_name,
+              avatar_url: p.avatar_url,
+              status: p.status,
+              last_active: new Date().toISOString(),
+              status_message: trimmed,
+            })
+            break
+          }
+        }
+      }
+    }
+  },
+
+  setAutoReply: (enabled: boolean) => {
+    set({ autoReply: enabled })
   },
 
   join: (profile) => {
@@ -66,6 +112,7 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
         avatar_url: profile.avatar_url,
         status,
         last_active: new Date().toISOString(),
+        status_message: get().statusMessage,
       })
     }
 
@@ -192,6 +239,7 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
             avatar_url: p.avatar_url,
             status: p.status,
             last_active: p.last_active,
+            status_message: p.status_message || null,
           })
         }
       }
@@ -216,6 +264,7 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
               avatar_url: profile.avatar_url,
               status: 'active',
               last_active: new Date().toISOString(),
+              status_message: get().statusMessage,
             })
           }
         }, HEARTBEAT_INTERVAL_MS)

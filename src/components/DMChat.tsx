@@ -19,7 +19,7 @@ export function DMChat() {
   const friend = session?.friend
   const friendId = session?.friendId || ''
 
-  const { getStatus } = usePresenceStore()
+  const { getStatus, getStatusMessage } = usePresenceStore()
 
   const [nudgeShake, setNudgeShake] = useState(false)
   const [nudgeCooldown, setNudgeCooldown] = useState(false)
@@ -133,6 +133,7 @@ export function DMChat() {
 
   const status = friendId ? getStatus(friendId) : 'offline'
   const statusText = status === 'active' ? 'Active now' : status === 'idle' ? 'Idle' : 'Offline'
+  const friendStatusMsg = friendId ? getStatusMessage(friendId) : null
 
   return (
     <div className="flex-1 flex flex-col">
@@ -164,6 +165,11 @@ export function DMChat() {
               <span className="text-blue-400 ml-2">typing...</span>
             )}
           </p>
+          {friendStatusMsg && (
+            <p className="text-zinc-500 text-[10px] italic truncate" title={friendStatusMsg}>
+              "{friendStatusMsg}"
+            </p>
+          )}
         </div>
         <button
           onClick={() => setShowEndConfirm(true)}
