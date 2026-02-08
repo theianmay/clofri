@@ -152,9 +152,14 @@ export function Layout() {
         {/* Header */}
         <div className={`border-b border-zinc-800 flex items-center ${collapsed ? 'p-3 justify-center' : 'p-4 justify-between'}`}>
           {collapsed ? (
-            <button onClick={toggleCollapsed} className="p-2 text-zinc-500 hover:text-white transition-colors rounded-lg hover:bg-zinc-800" title="Expand sidebar">
-              <ChevronsRight className="w-4 h-4" />
-            </button>
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                <span className="text-white font-bold text-xs">cf</span>
+              </div>
+              <button onClick={toggleCollapsed} className="p-1 text-zinc-500 hover:text-white transition-colors" title="Expand sidebar">
+                <ChevronsRight className="w-4 h-4" />
+              </button>
+            </div>
           ) : (
             <>
               <div className="flex items-center gap-2">
