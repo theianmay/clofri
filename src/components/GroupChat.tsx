@@ -13,7 +13,7 @@ import {
   UserMinus,
   LogOut,
   Circle,
-  PhoneOff,
+  XCircle,
   ChevronsLeft,
   ChevronsRight,
 } from 'lucide-react'
@@ -301,7 +301,7 @@ export function GroupChat() {
                 onClick={handleEndSession}
                 className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm px-2 py-1.5 w-full rounded-lg hover:bg-zinc-800/50 transition-colors"
               >
-                <PhoneOff className="w-4 h-4" />
+                <XCircle className="w-4 h-4" />
                 End Session
               </button>
             ) : (
@@ -379,7 +379,7 @@ export function GroupChat() {
                 onClick={handleEndSession}
                 className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm px-2 py-1.5 w-full rounded-lg hover:bg-zinc-800/50 transition-colors"
               >
-                <PhoneOff className="w-4 h-4" />
+                <XCircle className="w-4 h-4" />
                 End Session
               </button>
             ) : (
