@@ -75,6 +75,7 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | FRI-10 | As a user, the friend request UI resets after a successful send | ✅ Done | Input clears, panel can close |
 | FRI-11 | As a user, I should be notified in real-time when I receive a friend request | ✅ Done | `friend_request` lobby broadcast → sound + fetchFriends |
 | FRI-12 | As a user, I should be able to search/filter my friends list by name | ✅ Done | Search input (shown when >3 friends) filters across all categories |
+| FRI-13 | As a user, I can cancel a sent friend request that is still pending | ✅ Done | X button on sent request cards, deletes the friendship row |
 
 ---
 

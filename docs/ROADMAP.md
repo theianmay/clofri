@@ -16,7 +16,7 @@
 
 ## Short-term (validate with real users)
 
-- [ ] **Deploy** — Ship frontend to Vercel, test with 2-3 friend groups. All pre-deploy polish is complete.
+- [x] **Deploy** — Shipped frontend to Vercel, live and testing with real users.
 - [x] **Friend categorization** — Collapsible category sections on Friends page. Friends grouped by category with inline online/offline status, sorted by presence. Stored in localStorage for MVP. *(Future: migrate to Supabase tables for cross-device sync.)*
 - [x] **Presence on home screen** — Friends page (home) shows active/idle/offline status for each friend via global lobby presence.
 - [x] **Unread indicator** — Blue dot on group/DM cards when there are new messages since last visit (client-side, localStorage timestamps).

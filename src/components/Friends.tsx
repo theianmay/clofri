@@ -466,6 +466,13 @@ export function Friends() {
                           <Clock className="w-3 h-3" /> Pending
                         </p>
                       </div>
+                      <button
+                        onClick={() => handleReject(friendship.id)}
+                        className="p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
+                        title="Cancel request"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   ))}
                 </div>
