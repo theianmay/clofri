@@ -158,15 +158,15 @@ export function Layout() {
               <p className="text-zinc-500 text-xs">{profile?.friend_code}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="space-y-0.5">
             <button
               onClick={() => { const next = !soundOn; setSoundOn(next); setSoundEnabled(next) }}
-              className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors"
-              title={soundOn ? 'Mute sounds' : 'Unmute sounds'}
+              className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors w-full"
             >
               {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              {soundOn ? 'Sounds on' : 'Sounds off'}
             </button>
-            <button onClick={signOut} className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors flex-1">
+            <button onClick={signOut} className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors w-full">
               <LogOut className="w-4 h-4" /> Sign out
             </button>
           </div>
@@ -325,17 +325,17 @@ export function Layout() {
                   </button>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="space-y-0.5">
                 <button
                   onClick={() => { const next = !soundOn; setSoundOn(next); setSoundEnabled(next) }}
-                  className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors"
-                  title={soundOn ? 'Mute sounds' : 'Unmute sounds'}
+                  className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors w-full"
                 >
                   {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                  {soundOn ? 'Sounds on' : 'Sounds off'}
                 </button>
                 <button
                   onClick={signOut}
-                  className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors flex-1"
+                  className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors w-full"
                 >
                   <LogOut className="w-4 h-4" />
                   Sign out
