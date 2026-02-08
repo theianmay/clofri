@@ -86,6 +86,15 @@ export const useFriendStore = create<FriendState>((set, get) => ({
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return { error: 'Not authenticated' }
 
+      // Verify current user has a profile
+      const { data: myProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single()
+
+      if (!myProfile) return { error: 'Your profile is not set up yet. Try refreshing the page.' }
+
       // Find user by friend code
       const { data: target, error: findErr } = await supabase
         .from('profiles')
@@ -93,8 +102,7 @@ export const useFriendStore = create<FriendState>((set, get) => ({
         .eq('friend_code', friendCode.toUpperCase())
         .single()
 
-      if (findErr) console.error('sendRequest find profile error:', findErr)
-      if (!target) return { error: 'No user found with that friend code' }
+      if (findErr || !target) return { error: 'No user found with that friend code' }
       if ((target as any).id === user.id) return { error: "You can't add yourself" }
 
       // Check if friendship already exists
@@ -105,7 +113,7 @@ export const useFriendStore = create<FriendState>((set, get) => ({
           `and(requester_id.eq.${user.id},addressee_id.eq.${(target as any).id}),and(requester_id.eq.${(target as any).id},addressee_id.eq.${user.id})`
         )
 
-      if (checkErr) console.error('sendRequest check existing error:', checkErr)
+      if (checkErr) return { error: 'Could not check existing friendships. Try again.' }
 
       if (existing && existing.length > 0) {
         const f = existing[0] as any
@@ -117,23 +125,26 @@ export const useFriendStore = create<FriendState>((set, get) => ({
         .from('friendships')
         .insert({ requester_id: user.id, addressee_id: (target as any).id } as any)
 
-      if (error) { console.error('sendRequest insert error:', error); return { error: error.message } }
+      if (error) return { error: error.message }
 
       // Notify recipient via lobby broadcast
-      const lobbyChannel = usePresenceStore.getState().channel
-      if (lobbyChannel) {
-        lobbyChannel.send({
-          type: 'broadcast',
-          event: 'friend_request',
-          payload: { recipient_id: (target as any).id },
-        })
+      try {
+        const lobbyChannel = usePresenceStore.getState().channel
+        if (lobbyChannel) {
+          lobbyChannel.send({
+            type: 'broadcast',
+            event: 'friend_request',
+            payload: { recipient_id: (target as any).id },
+          })
+        }
+      } catch {
+        // Non-critical: broadcast failed but request was sent
       }
 
       await get().fetchFriends()
       return { error: null }
-    } catch (err) {
-      console.error('sendRequest unexpected error:', err)
-      return { error: 'Something went wrong. Check console for details.' }
+    } catch (err: any) {
+      return { error: err?.message || 'Something went wrong. Please try again.' }
     }
   },
 

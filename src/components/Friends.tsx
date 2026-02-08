@@ -228,14 +228,19 @@ export function Friends() {
     setActionLoading(true)
     setError(null)
     setSuccess(null)
-    const result = await sendRequest(friendCode.trim())
-    setActionLoading(false)
-    if (result.error) {
-      setError(result.error)
-    } else {
-      setSuccess('Friend request sent!')
-      setFriendCode('')
-      setTimeout(() => setSuccess(null), 3000)
+    try {
+      const result = await sendRequest(friendCode.trim())
+      if (result.error) {
+        setError(result.error)
+      } else {
+        setSuccess('Friend request sent!')
+        setFriendCode('')
+        setTimeout(() => setSuccess(null), 3000)
+      }
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setActionLoading(false)
     }
   }
 

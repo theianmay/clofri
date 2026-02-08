@@ -79,6 +79,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 }))
 
 async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
+  // Try to fetch existing profile
   const { data: existing, error: selectError } = await supabase
     .from('profiles')
     .select('*')
@@ -88,6 +89,7 @@ async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
   if (existing) return existing as Profile
   if (selectError && selectError.code !== 'PGRST116') console.error('Profile fetch error:', selectError.message)
 
+  // Profile doesn't exist — create it
   const displayName =
     user.user_metadata?.full_name ||
     user.user_metadata?.name ||
@@ -105,7 +107,19 @@ async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
     .select()
     .single()
 
-  if (insertError) console.error('Profile creation failed:', insertError)
+  if (created) return created as Profile
 
-  return created as Profile | null
+  // INSERT failed — likely race condition (duplicate key). Retry SELECT.
+  if (insertError) {
+    const { data: retried } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    if (retried) return retried as Profile
+    console.error('Profile creation failed and retry fetch also failed:', insertError)
+  }
+
+  return null
 }
