@@ -100,11 +100,7 @@ export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
       }, 3000)
     })
 
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        console.log('[DM] Channel subscribed:', channelName)
-      }
-    })
+    channel.subscribe()
 
     channelRef.current = channel
 

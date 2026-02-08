@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useGroupStore } from '../stores/groupStore'
 import { useAuthStore } from '../stores/authStore'
@@ -18,6 +18,8 @@ import {
   ChevronsRight,
 } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
+import { linkifyText } from '../lib/linkify'
+import { ArrowDown } from 'lucide-react'
 
 export function GroupChat() {
   const { groupId } = useParams<{ groupId: string }>()
@@ -33,7 +35,11 @@ export function GroupChat() {
   const [input, setInput] = useState('')
   const [showMembers, setShowMembers] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [showNewMsg, setShowNewMsg] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const isNearBottomRef = useRef(true)
 
   useEffect(() => {
     if (!group) fetchGroups()
@@ -50,9 +56,35 @@ export function GroupChat() {
     if (groupId) markRead(groupId)
   }, [groupId, markRead])
 
+  // Auto-focus input on mount
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    inputRef.current?.focus()
+  }, [groupId])
+
+  // Smart auto-scroll: only when near bottom
+  useEffect(() => {
+    if (isNearBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    } else if (messages.length > 0) {
+      const lastMsg = messages[messages.length - 1]
+      if (lastMsg.user_id !== profile?.id) {
+        setShowNewMsg(true)
+      }
+    }
   }, [messages])
+
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current
+    if (!el) return
+    const threshold = 100
+    isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < threshold
+    if (isNearBottomRef.current) setShowNewMsg(false)
+  }, [])
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    setShowNewMsg(false)
+  }, [])
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,46 +158,66 @@ export function GroupChat() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {messages.length === 0 && (
-            <div className="text-center py-20">
-              <p className="text-zinc-600 text-sm">No messages yet. Say something!</p>
-            </div>
-          )}
-          {messages.map((msg) => {
-            const isOwn = msg.user_id === profile?.id
-            return (
-              <div
-                key={msg.id}
-                className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}
-              >
-                {!isOwn && (
-                  <AvatarIcon avatarUrl={msg.avatar_url} displayName={msg.display_name} size="sm" className="shrink-0" />
-                )}
-                <div className={`max-w-[70%] ${isOwn ? 'text-right' : ''}`}>
-                  {!isOwn && (
-                    <p className="text-zinc-500 text-xs mb-1">{msg.display_name}</p>
-                  )}
-                  <div
-                    className={`inline-block px-3 py-2 rounded-2xl text-sm ${
-                      isOwn
-                        ? 'bg-blue-600 text-white rounded-br-md'
-                        : 'bg-zinc-800 text-zinc-200 rounded-bl-md'
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
-                  <p className="text-zinc-700 text-[10px] mt-1">
-                    {new Date(msg.created_at).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                </div>
+        <div className="relative flex-1 overflow-hidden">
+          <div ref={scrollContainerRef} onScroll={handleScroll} className="h-full overflow-y-auto p-4 space-y-1">
+            {messages.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-zinc-600 text-sm">No messages yet. Say something!</p>
               </div>
-            )
-          })}
-          <div ref={messagesEndRef} />
+            )}
+            {messages.map((msg, i) => {
+              const isOwn = msg.user_id === profile?.id
+              const prev = i > 0 ? messages[i - 1] : null
+              const isGrouped = prev?.user_id === msg.user_id &&
+                new Date(msg.created_at).getTime() - new Date(prev.created_at).getTime() < 120000
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''} ${isGrouped ? 'mt-0.5' : 'mt-3'}`}
+                >
+                  {!isOwn && (
+                    isGrouped
+                      ? <div className="w-8 shrink-0" />
+                      : <AvatarIcon avatarUrl={msg.avatar_url} displayName={msg.display_name} size="sm" className="shrink-0" />
+                  )}
+                  <div className={`max-w-[70%] ${isOwn ? 'text-right' : ''}`}>
+                    {!isOwn && !isGrouped && (
+                      <p className="text-zinc-500 text-xs mb-1">{msg.display_name}</p>
+                    )}
+                    <div
+                      className={`inline-block px-3 py-2 rounded-2xl text-sm break-words ${
+                        isOwn
+                          ? 'bg-blue-600 text-white rounded-br-md'
+                          : 'bg-zinc-800 text-zinc-200 rounded-bl-md'
+                      }`}
+                    >
+                      {linkifyText(msg.text)}
+                    </div>
+                    {!isGrouped && (
+                      <p className="text-zinc-700 text-[10px] mt-1">
+                        {new Date(msg.created_at).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* New messages indicator */}
+          {showNewMsg && (
+            <button
+              onClick={scrollToBottom}
+              className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-full shadow-lg hover:bg-blue-500 transition-colors"
+            >
+              <ArrowDown className="w-3 h-3" />
+              New messages
+            </button>
+          )}
         </div>
 
         {/* Ephemeral notice */}
@@ -181,6 +233,7 @@ export function GroupChat() {
         <form onSubmit={handleSend} className="p-4 border-t border-zinc-800">
           <div className="flex gap-2">
             <input
+              ref={inputRef}
               type="text"
               value={input}
               onChange={handleInput}
