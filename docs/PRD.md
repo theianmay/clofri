@@ -37,7 +37,7 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | AUTH-4 | As a new user, my profile is auto-created on first login with my email prefix as display name | ✅ Done | `fetchOrCreateProfile` in authStore |
 | AUTH-5 | As a user, I should stay logged in across page refreshes until I explicitly log out | ✅ Done | Supabase session persistence |
 | AUTH-6 | As a user, I can sign in with Google OAuth | 🔲 Not configured | Code exists (`signInWithGoogle`) but Google Cloud Console OAuth not set up |
-| AUTH-8 | As a user, I receive a branded, clear magic link email when logging in | 🔲 Planned | Customize Supabase email template (subject, body, branding) |
+| AUTH-8 | As a user, I receive a branded, clear magic link email when logging in | ✅ Done | Customized Supabase email template (subject, body, branding) |
 | AUTH-7 | As a user, I see a loading state while my session is being restored | ✅ Done | `loading` flag in authStore |
 
 ---
@@ -130,9 +130,9 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | GRP-4 | As a user, I can see a list of my active groups on the Groups page | ✅ Done | Filtered by `is_active = true` |
 | GRP-5 | As a user, I can see group member count and unread indicators on group cards | ✅ Done | Member count badge + blue unread dot |
 | GRP-6 | As a user, I can copy a group's invite code to share with friends | ✅ Done | Copy button in GroupChat sidebar |
-| GRP-7 | As a user, I can leave a group I'm a member of | ✅ Done | Leave button for non-creators |
+| GRP-7 | As a user, I can leave a group I'm a member of (with confirmation) | ✅ Done | Leave button with confirm dialog for non-creators |
 | GRP-8 | As a group creator, I can delete the group entirely | ✅ Done | Consolidated into End Session (no separate delete) |
-| GRP-9 | As a group creator, I can kick a member from the group | ✅ Done | Kick button on member list hover |
+| GRP-9 | As a group creator, I can kick a member from the group (with confirmation) | ✅ Done | Kick button with confirm dialog; visible on mobile, hover on desktop |
 | GRP-10 | As a group creator, I can end the group session (delete messages, deactivate group) | ✅ Done | End Session button → `endGroupSession` |
 | GRP-11 | As a user, I should be notified and redirected when a group session I'm in is ended by the creator | ✅ Done | `group_ended` lobby broadcast → sound + fetchGroups + auto-redirect |
 | GRP-12 | As a user, ended groups should disappear from my Groups page | ✅ Done | `fetchGroups` filters by `is_active = true` |
@@ -151,9 +151,13 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | CHAT-3 | As a user, I see typing indicators when others are composing a message | ✅ Done | Typing broadcast events |
 | CHAT-4 | As a user, my sent messages appear instantly (optimistic UI) before server confirms | ✅ Done | Local state update before DB insert |
 | CHAT-5 | As a user, I see each message with the sender's avatar, name, and timestamp | ✅ Done | Avatar + name for others, right-aligned for own |
-| CHAT-6 | As a user, the chat auto-scrolls to the latest message | ✅ Done | `scrollIntoView` on messages update |
+| CHAT-6 | As a user, the chat auto-scrolls to the latest message only when I'm near the bottom | ✅ Done | Smart scroll: only auto-scrolls when near bottom; shows "New messages" pill when scrolled up |
 | CHAT-7 | As a user, I hear a notification sound when a new message arrives from someone else | ✅ Done | `playMessageSound` on incoming messages |
 | CHAT-8 | As a user, I can see the last 50 messages in a conversation | ✅ Done | Slice to 50 in state + DB query limited to 50 |
+| CHAT-12 | As a user, consecutive messages from the same person are visually grouped | ✅ Done | Messages within 2min collapse avatar/name/timestamp |
+| CHAT-13 | As a user, URLs I share in chat are clickable links | ✅ Done | `linkifyText` utility detects http/https URLs and renders as `<a>` tags |
+| CHAT-14 | As a user, the chat input is auto-focused when I enter a conversation | ✅ Done | `inputRef` focused on mount |
+| CHAT-15 | As a user, I can type messages up to 2000 characters (enforced in UI) | ✅ Done | `maxLength={2000}` on both DM and Group chat inputs |
 | CHAT-9 | As a user, I should be able to send images or media | 🔲 Future | Requires Supabase Storage |
 | CHAT-10 | As a user, I should be able to react to messages with emoji | 🔲 Future | Requires reactions table + UI |
 | CHAT-11 | As a user, I should see link previews when someone shares a URL | 🔲 Future | Requires URL detection + OG scraping |
@@ -209,6 +213,13 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | NAV-6 | As a user, the Friends page is my landing page when I open the app | ✅ Done | Route `/` maps to Friends |
 | NAV-7 | As a user, I see a proper branded favicon in the browser tab | ✅ Done | Blue chat bubble SVG favicon at `public/favicon.svg` |
 | NAV-8 | As a user, the page title in the browser tab reflects the current page | ✅ Done | Dynamic title: "clofri · Friends", "clofri · Messages", etc. |
+| NAV-9 | As a user, I see a 404 page when navigating to an unknown route | ✅ Done | `NotFound` component with catch-all `*` route |
+| NAV-10 | As a user, I see an unread badge on the Groups nav item | ✅ Done | Blue dot on Groups nav matching Messages nav badge |
+| NAV-11 | As a mobile user, the GroupChat members panel overlays the chat instead of pushing it off-screen | ✅ Done | Fixed overlay with backdrop on mobile; flex sidebar on desktop |
+| NAV-12 | As a mobile user, I can access invite code and actions (End Session/Leave) from the members panel | ✅ Done | Invite code + actions added to mobile members overlay |
+| NAV-13 | As a mobile user, I can toggle notification sounds from the sidebar | ✅ Done | Sound toggle with label in both mobile and desktop sidebars |
+| NAV-14 | As a user, mobile browser chrome matches the app's dark theme | ✅ Done | `<meta name="theme-color" content="#09090b">` |
+| NAV-15 | As a user, the app has a meta description for link previews | ✅ Done | `<meta name="description">` in index.html |
 
 ---
 
@@ -247,8 +258,11 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 - ~~**FRI-11**: Real-time friend request notifications~~ ✅
 - ~~**FRI-12**: Search/filter friends by name~~ ✅
 - ~~**NAV-8**: Dynamic page titles~~ ✅
-- **AUTH-8**: Customized magic link email template (Supabase dashboard config)
-- **AUTH-6**: Google OAuth configuration (Google Cloud Console setup)
+- ~~**UI Audit Round 1**: Mobile touch, 404 route, input validation, nav badges, tag menu, sound toggle, meta tags~~ ✅
+- ~~**UI Audit Round 2**: Mobile overlay sidebar, leave confirmation, console cleanup, maxLength on all inputs, theme-color~~ ✅
+- ~~**Chat Best Practices**: Smart auto-scroll, message grouping, auto-focus, clickable URLs~~ ✅
+- ~~**AUTH-8**: Customized magic link email template (Supabase dashboard config)~~ ✅
+- **AUTH-6**: Google OAuth configuration (Google Cloud Console setup) — *optional, can do post-deploy*
 
 ### Medium-term (post-validation)
 - **Persistent groups (paid)** — `is_persistent` flag for premium groups that keep messages

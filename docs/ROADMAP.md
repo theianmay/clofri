@@ -16,7 +16,7 @@
 
 ## Short-term (validate with real users)
 
-- [ ] **Deploy** — Ship frontend to Vercel, test with 2-3 friend groups.
+- [ ] **Deploy** — Ship frontend to Vercel, test with 2-3 friend groups. All pre-deploy polish is complete.
 - [x] **Friend categorization** — Collapsible category sections on Friends page. Friends grouped by category with inline online/offline status, sorted by presence. Stored in localStorage for MVP. *(Future: migrate to Supabase tables for cross-device sync.)*
 - [x] **Presence on home screen** — Friends page (home) shows active/idle/offline status for each friend via global lobby presence.
 - [x] **Unread indicator** — Blue dot on group/DM cards when there are new messages since last visit (client-side, localStorage timestamps).
@@ -28,6 +28,9 @@
 - [x] **Search friends by name** — Search input on Friends page (shown when >3 friends), filters across all categories.
 - [x] **Dynamic page titles** — Browser tab shows "clofri · Friends", "clofri · Messages", etc.
 - [x] **Global group message notifications** — `new_group_msg` lobby broadcast so members get sound + unread indicator when not in the group chat.
+- [x] **UI Audit Round 1** — Mobile touch accessibility (hover-only → always visible on mobile), 404 catch-all route, mobile GroupChat sidebar with invite code + actions, maxLength on chat inputs, Groups nav unread badge, ephemeral notice text fix, tag menu close on outside click, sound toggle in mobile sidebar, meta description.
+- [x] **UI Audit Round 2** — Mobile members overlay (fixed panel instead of flex push), leave group confirmation, console.log cleanup, maxLength on all form inputs (group name, friend code, join code), consolidated duplicate imports, removed unused vite.svg, theme-color meta tag.
+- [x] **Chat Best Practices** — Smart auto-scroll (only when near bottom + "New messages" pill), message grouping (consecutive messages within 2min collapse), auto-focus chat input on mount, clickable URLs via `linkifyText` utility, consistent XCircle icon for end session.
 - [ ] **UI / Layout redesign** - come up with the style, colors, and vibe. modern but also vintage, like an ode to the AIM/MSN Messengers of the world that are gone
 
 ---
