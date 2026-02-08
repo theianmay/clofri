@@ -178,11 +178,11 @@ export function Layout() {
                       maxLength={30}
                     />
                     <button
-                      onMouseDown={(e) => { e.preventDefault(); saveName() }}
-                      className="p-0.5 text-green-400 hover:text-green-300 transition-colors shrink-0"
+                      onPointerDown={(e) => { e.preventDefault(); saveName() }}
+                      className="p-1.5 text-green-400 hover:text-green-300 transition-colors shrink-0"
                       title="Save name"
                     >
-                      <Check className="w-3.5 h-3.5" />
+                      <Check className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
@@ -364,11 +364,11 @@ export function Layout() {
                           maxLength={30}
                         />
                         <button
-                          onMouseDown={(e) => { e.preventDefault(); saveName() }}
-                          className="p-0.5 text-green-400 hover:text-green-300 transition-colors shrink-0"
+                          onPointerDown={(e) => { e.preventDefault(); saveName() }}
+                          className="p-1.5 text-green-400 hover:text-green-300 transition-colors shrink-0"
                           title="Save name"
                         >
-                          <Check className="w-3.5 h-3.5" />
+                          <Check className="w-4 h-4" />
                         </button>
                       </div>
                     ) : (

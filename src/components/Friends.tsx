@@ -140,6 +140,13 @@ export function Friends() {
 
   useEffect(() => {
     fetchFriends()
+
+    // Refetch when tab becomes visible (catches missed broadcasts)
+    const handleVisibility = () => {
+      if (!document.hidden) fetchFriends()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [fetchFriends])
 
   // Close tag menu on outside click
