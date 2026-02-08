@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { MessageCircle, Users, LogOut, Copy, Check, Pencil, Menu, X, ChevronsLeft, ChevronsRight, Volume2, VolumeX, Mail } from 'lucide-react'
+import { MessageCircle, Users, LogOut, Copy, Check, Pencil, Menu, X, ChevronsLeft, ChevronsRight, Volume2, VolumeX, Mail, Share2 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { ConnectionBanner } from './ConnectionBanner'
 import { usePresenceStore } from '../stores/presenceStore'
@@ -84,6 +84,16 @@ export function Layout() {
     navigator.clipboard.writeText(profile.friend_code)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const [shareCopied, setShareCopied] = useState(false)
+  const copyShareLink = () => {
+    if (!profile) return
+    const url = window.location.origin
+    const text = `Join me on clofri! ${url}\nMy friend code: ${profile.friend_code}`
+    navigator.clipboard.writeText(text)
+    setShareCopied(true)
+    setTimeout(() => setShareCopied(false), 2000)
   }
 
   const handleAvatarSelect = async (avatarUrl: string) => {
@@ -183,22 +193,31 @@ export function Layout() {
                   <Pencil className="w-3 h-3 text-zinc-600 group-hover/name:text-zinc-400 shrink-0" />
                 </button>
               )}
-              <button
-                onClick={copyFriendCode}
-                className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-3 h-3 text-green-400" />
-                    <span className="text-green-400">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3" />
-                    <span>{profile?.friend_code}</span>
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={copyFriendCode}
+                  className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3 h-3 text-green-400" />
+                      <span className="text-green-400">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>{profile?.friend_code}</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={copyShareLink}
+                  className="flex items-center gap-1 text-xs text-zinc-500 hover:text-blue-400 transition-colors"
+                  title="Copy invite link + friend code"
+                >
+                  {shareCopied ? <Check className="w-3 h-3 text-green-400" /> : <Share2 className="w-3 h-3" />}
+                </button>
+              </div>
             </div>
           </div>
           <div className="space-y-0.5">
@@ -359,22 +378,31 @@ export function Layout() {
                       <Pencil className="w-3 h-3 text-zinc-600 group-hover/name:text-zinc-400 shrink-0" />
                     </button>
                   )}
-                  <button
-                    onClick={copyFriendCode}
-                    className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="w-3 h-3 text-green-400" />
-                        <span className="text-green-400">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3 h-3" />
-                        <span>{profile?.friend_code}</span>
-                      </>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={copyFriendCode}
+                      className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-3 h-3 text-green-400" />
+                          <span className="text-green-400">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>{profile?.friend_code}</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={copyShareLink}
+                      className="flex items-center gap-1 text-xs text-zinc-500 hover:text-blue-400 transition-colors"
+                      title="Copy invite link + friend code"
+                    >
+                      {shareCopied ? <Check className="w-3 h-3 text-green-400" /> : <Share2 className="w-3 h-3" />}
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="space-y-0.5">
