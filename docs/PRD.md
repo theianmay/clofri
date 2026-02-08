@@ -90,8 +90,8 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | CAT-4 | As a user, I can delete a category (friends in it become uncategorized) | ✅ Done | Removes category and all its assignments |
 | CAT-5 | As a user, my categories persist across page refreshes | ✅ Done | localStorage persistence |
 | CAT-6 | As a user, my categories should sync across devices | 🔲 Future | Currently localStorage only — needs Supabase migration |
-| CAT-7 | As a user, I see my friends grouped into collapsible sections by category, with each friend showing their online/offline status within the section | 🔲 Planned | Category A (expanded): friend1 🟢, friend2 ⚫ → Category B → ... Online friends sorted to top within each category |
-| CAT-8 | As a user, I can expand/collapse each category section to focus on the group I care about | 🔲 Planned | Collapsible accordion-style sections |
+| CAT-7 | As a user, I see my friends grouped into collapsible sections by category, with each friend showing their online/offline status within the section | ✅ Done | Category sections with inline status, online sorted to top, uncategorized section for untagged friends |
+| CAT-8 | As a user, I can expand/collapse each category section to focus on the group I care about | ✅ Done | Chevron toggle on each section header |
 
 ---
 
@@ -113,7 +113,7 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | DM-10 | As a user, new DM sessions from others appear on my Messages page without a refresh | ✅ Done | Lobby broadcast triggers `fetchSessions` |
 | DM-11 | As a user, I see an ephemeral notice in the chat reminding me messages are temporary | ✅ Done | Small text below messages area |
 | DM-12 | As a user, messages persist during an active session so I don't lose them on page refresh | ✅ Done | Messages stored in `direct_messages` table during session |
-| DM-13 | As a user, I should see a brief "conversation ended" message before being redirected | 🔲 Future | Currently silently redirects to /messages |
+| DM-13 | As a user, I should see a brief "conversation ended" message before being redirected | ✅ Done | Shows "Conversation ended" screen for 2s then redirects to /messages |
 | DM-14 | As a user, I should be able to scroll back through older messages in a long conversation | 🔲 Future | Currently limited to last 50 messages with no pagination |
 
 ---
@@ -134,7 +134,7 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | GRP-8 | As a group creator, I can delete the group entirely | ✅ Done | Delete button removes group + members + messages |
 | GRP-9 | As a group creator, I can kick a member from the group | ✅ Done | Kick button on member list hover |
 | GRP-10 | As a group creator, I can end the group session (delete messages, deactivate group) | ✅ Done | End Session button → `endGroupSession` |
-| GRP-11 | As a user, I should be notified and redirected when a group session I'm in is ended by the creator | 🔲 Future | No `group_ended` lobby broadcast yet (unlike DM ended) |
+| GRP-11 | As a user, I should be notified and redirected when a group session I'm in is ended by the creator | ✅ Done | `group_ended` lobby broadcast → sound + fetchGroups + auto-redirect |
 | GRP-12 | As a user, ended groups should disappear from my Groups page | ✅ Done | `fetchGroups` filters by `is_active = true` |
 | GRP-13 | As a user, I should see who is currently online in the group member list | ✅ Done | Online status circles next to member names |
 
@@ -207,7 +207,7 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | NAV-4 | As a user, I see a connection banner when my real-time connection drops | ✅ Done | Red/amber/green banners for disconnected/reconnecting/reconnected |
 | NAV-5 | As a user, I am redirected to the login page if my session expires | ✅ Done | Auth guard in App.tsx |
 | NAV-6 | As a user, the Friends page is my landing page when I open the app | ✅ Done | Route `/` maps to Friends |
-| NAV-7 | As a user, I see a proper branded favicon in the browser tab | 🔲 Planned | Need to create and set a clofri favicon |
+| NAV-7 | As a user, I see a proper branded favicon in the browser tab | ✅ Done | Blue chat bubble SVG favicon at `public/favicon.svg` |
 | NAV-8 | As a user, the page title in the browser tab reflects the current page | 🔲 Future | e.g. "clofri · Friends", "clofri · Messages" |
 
 ---

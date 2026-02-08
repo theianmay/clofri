@@ -38,6 +38,13 @@ export function GroupChat() {
     if (!group) fetchGroups()
   }, [group, fetchGroups])
 
+  // Redirect if group session was ended by the creator
+  useEffect(() => {
+    if (groupId && groups.length > 0 && !groups.find((g) => g.id === groupId)) {
+      navigate('/groups')
+    }
+  }, [groupId, groups, navigate])
+
   useEffect(() => {
     if (groupId) markRead(groupId)
   }, [groupId, markRead])

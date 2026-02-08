@@ -25,18 +25,21 @@ export function DMChat() {
   })
 
   const [input, setInput] = useState('')
+  const [sessionEnded, setSessionEnded] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (sessionId) markRead(sessionId)
   }, [sessionId, markRead])
 
-  // Redirect if session was ended by the other user
+  // Show "conversation ended" briefly then redirect
   useEffect(() => {
-    if (sessionId && hasFetched && !sessions.find((s) => s.id === sessionId)) {
-      navigate('/messages')
+    if (sessionId && hasFetched && !sessions.find((s) => s.id === sessionId) && !sessionEnded) {
+      setSessionEnded(true)
+      const timer = setTimeout(() => navigate('/messages'), 2000)
+      return () => clearTimeout(timer)
     }
-  }, [sessionId, sessions, hasFetched, navigate])
+  }, [sessionId, sessions, hasFetched, navigate, sessionEnded])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -61,6 +64,18 @@ export function DMChat() {
   }
 
   if (!sessionId) return null
+
+  if (sessionEnded) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <XCircle className="w-10 h-10 text-zinc-500 mx-auto mb-3" />
+          <p className="text-zinc-300 font-medium">Conversation ended</p>
+          <p className="text-zinc-500 text-sm mt-1">Redirecting to messages...</p>
+        </div>
+      </div>
+    )
+  }
 
   const status = friendId ? getStatus(friendId) : 'offline'
   const statusText = status === 'active' ? 'Active now' : status === 'idle' ? 'Idle' : 'Offline'

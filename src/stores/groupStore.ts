@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Group, GroupMember, Profile } from '../types/database'
 import { supabase } from '../lib/supabase'
+import { usePresenceStore } from './presenceStore'
 
 export interface GroupWithMembers extends Group {
   members: (GroupMember & { profile: Profile })[]
@@ -209,12 +210,31 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   },
 
   endGroupSession: async (groupId: string) => {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    // Get member IDs before deleting them so we can notify
+    const group = get().groups.find((g) => g.id === groupId)
+    const memberIds = group?.members
+      .map((m) => m.user_id)
+      .filter((id) => id !== user?.id) || []
+
     // Delete all messages for this group
     await supabase.from('messages').delete().eq('group_id', groupId)
     // Mark group as inactive
     await supabase.from('groups').update({ is_active: false } as any).eq('id', groupId)
     // Remove all members
     await supabase.from('group_members').delete().eq('group_id', groupId)
+
+    // Notify other members via lobby broadcast
+    const lobbyChannel = usePresenceStore.getState().channel
+    if (lobbyChannel && memberIds.length > 0) {
+      lobbyChannel.send({
+        type: 'broadcast',
+        event: 'group_ended',
+        payload: { group_id: groupId, member_ids: memberIds, group_name: group?.name },
+      })
+    }
+
     await get().fetchGroups()
   },
 

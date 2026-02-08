@@ -129,6 +129,21 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
       }
     })
 
+    // --- Group ended listener ---
+    channel.on('broadcast', { event: 'group_ended' }, ({ payload }) => {
+      if (payload.member_ids?.includes(profile.id)) {
+        if (isSoundEnabled()) {
+          playMessageSound()
+        }
+
+        // Re-fetch groups to remove the ended one
+        // Dynamic import to avoid circular dependency at module level
+        import('./groupStore').then(({ useGroupStore }) => {
+          useGroupStore.getState().fetchGroups()
+        })
+      }
+    })
+
     // --- Presence sync ---
     channel.on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState<PresenceUser>()

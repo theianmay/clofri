@@ -17,13 +17,13 @@
 ## Short-term (validate with real users)
 
 - [ ] **Deploy** — Ship frontend to Vercel, test with 2-3 friend groups.
-- [x] **Friend categorization** — Users can create custom categories, assign friends to them, and filter the friends list by category. Stored in localStorage for MVP. *(Future: migrate to Supabase tables for cross-device sync.)*
+- [x] **Friend categorization** — Collapsible category sections on Friends page. Friends grouped by category with inline online/offline status, sorted by presence. Stored in localStorage for MVP. *(Future: migrate to Supabase tables for cross-device sync.)*
 - [x] **Presence on home screen** — Friends page (home) shows active/idle/offline status for each friend via global lobby presence.
 - [x] **Unread indicator** — Blue dot on group/DM cards when there are new messages since last visit (client-side, localStorage timestamps).
 - [x] **Sound/vibration** — Subtle two-tone notification sound when a message arrives from others. Toggle in sidebar (Volume icon). Works globally via lobby channel for DMs.
-- [ ] **Group session notifications** — Broadcast `group_ended` on lobby channel when creator ends a group session, so members are notified and auto-redirected (similar to DM ended flow).
+- [x] **Group session notifications** — Broadcast `group_ended` on lobby channel when creator ends a group session, so members are notified and auto-redirected (similar to DM ended flow).
 - [ ] **Group ephemeral UX polish** — Non-creators should also be able to leave/end their participation; clarify "End Session" vs "Delete Group" vs "Leave Group" actions.
-- [ ] **DM session ended toast/banner** — Show a brief "This conversation was ended" message before redirecting, instead of a silent redirect.
+- [x] **DM session ended toast/banner** — Shows "Conversation ended" screen for 2s before redirecting to /messages.
 - [ ] **UI / Layout redesign** - come up with the style, colors, and vibe. modern but also vintage, like an ode to the AIM/MSN Messengers of the world that are gone
 
 ---
