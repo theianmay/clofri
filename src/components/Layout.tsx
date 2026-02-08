@@ -8,6 +8,7 @@ import { AvatarIcon } from './AvatarIcon'
 import { AvatarPicker } from './AvatarPicker'
 import { isSoundEnabled, setSoundEnabled } from '../lib/sounds'
 import { useDMStore } from '../stores/dmStore'
+import { useGroupStore } from '../stores/groupStore'
 
 export function Layout() {
   const { profile, signOut, updateProfile } = useAuthStore()
@@ -92,6 +93,7 @@ export function Layout() {
   const statusColor = presenceStatus === 'active' ? 'bg-green-500' : presenceStatus === 'idle' ? 'bg-amber-400' : 'bg-zinc-600'
 
   const unreadDMCount = useDMStore((s) => s.unreadDMs.size)
+  const unreadGroupCount = useGroupStore((s) => s.unreadGroups.size)
 
   return (
     <div className="min-h-screen bg-zinc-950 flex">
@@ -138,7 +140,10 @@ export function Layout() {
             Messages
           </NavLink>
           <NavLink to="/groups" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>
-            <MessageCircle className="w-4 h-4" />
+            <div className="relative">
+              <MessageCircle className="w-4 h-4" />
+              {unreadGroupCount > 0 && <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-blue-500 rounded-full" />}
+            </div>
             Groups
           </NavLink>
         </nav>
@@ -153,9 +158,18 @@ export function Layout() {
               <p className="text-zinc-500 text-xs">{profile?.friend_code}</p>
             </div>
           </div>
-          <button onClick={signOut} className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors w-full">
-            <LogOut className="w-4 h-4" /> Sign out
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => { const next = !soundOn; setSoundOn(next); setSoundEnabled(next) }}
+              className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors"
+              title={soundOn ? 'Mute sounds' : 'Unmute sounds'}
+            >
+              {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+            <button onClick={signOut} className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors flex-1">
+              <LogOut className="w-4 h-4" /> Sign out
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -232,7 +246,10 @@ export function Layout() {
               }`
             }
           >
-            <MessageCircle className="w-4 h-4 shrink-0" />
+            <div className="relative shrink-0">
+              <MessageCircle className="w-4 h-4" />
+              {unreadGroupCount > 0 && <span className="absolute -top-1 -right-1.5 w-2 h-2 bg-blue-500 rounded-full" />}
+            </div>
             {!collapsed && <span>Groups</span>}
           </NavLink>
         </nav>

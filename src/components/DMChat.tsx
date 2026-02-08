@@ -168,7 +168,7 @@ export function DMChat() {
       {/* Ephemeral notice */}
       <div className="px-4 py-1">
         <p className="text-zinc-700 text-[10px] text-center">
-          This conversation is ephemeral — it ends when you close it
+          Messages are ephemeral — they disappear when the conversation ends
         </p>
       </div>
 
@@ -180,6 +180,7 @@ export function DMChat() {
             value={input}
             onChange={handleInput}
             placeholder="Type a message..."
+            maxLength={2000}
             className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-4 py-2.5 rounded-xl border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm"
           />
           <button

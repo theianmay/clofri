@@ -72,10 +72,10 @@ function FriendCard({
         </p>
         <p className={`text-xs ${statusTextColor}`}>{statusText}</p>
       </div>
-      <div className="relative">
+      <div className="relative" data-tag-menu>
         <button
           onClick={() => setTagMenuOpen(tagMenuOpen === friendship.id ? null : friendship.id)}
-          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-zinc-300 rounded-lg transition-all"
+          className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-zinc-300 rounded-lg transition-all"
           title="Set category"
         >
           <Tag className="w-3.5 h-3.5" />
@@ -93,14 +93,14 @@ function FriendCard({
       </div>
       <button
         onClick={() => handleStartDM(friend.id)}
-        className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-blue-400 rounded-lg transition-all"
+        className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-blue-400 rounded-lg transition-all"
         title="Message"
       >
         <MessageCircle className="w-4 h-4" />
       </button>
       <button
         onClick={() => handleRemove(friendship.id)}
-        className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
+        className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
         title="Remove friend"
       >
         <UserMinus className="w-4 h-4" />
@@ -141,6 +141,17 @@ export function Friends() {
   useEffect(() => {
     fetchFriends()
   }, [fetchFriends])
+
+  // Close tag menu on outside click
+  useEffect(() => {
+    if (!tagMenuOpen) return
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest('[data-tag-menu]')) setTagMenuOpen(null)
+    }
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [tagMenuOpen])
 
   const toggleSection = (sectionId: string) => {
     setCollapsedSections((prev) => {

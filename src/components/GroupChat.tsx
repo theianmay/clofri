@@ -185,6 +185,7 @@ export function GroupChat() {
               value={input}
               onChange={handleInput}
               placeholder="Type a message..."
+              maxLength={2000}
               className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-4 py-2.5 rounded-xl border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm"
             />
             <button
@@ -281,8 +282,8 @@ export function GroupChat() {
                   </div>
                   {canKick && (
                     <button
-                      onClick={() => kickMember(groupId!, member.user_id)}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-zinc-600 hover:text-red-400 transition-all"
+                      onClick={() => { if (confirm(`Remove ${member.profile?.display_name} from the group?`)) kickMember(groupId!, member.user_id) }}
+                      className="md:opacity-0 md:group-hover:opacity-100 p-1 text-zinc-600 hover:text-red-400 transition-all"
                       title="Remove member"
                     >
                       <UserMinus className="w-3.5 h-3.5" />
@@ -344,13 +345,52 @@ export function GroupChat() {
                     </div>
                   </div>
                   {canKick && (
-                    <button onClick={() => kickMember(groupId!, member.user_id)} className="opacity-0 group-hover:opacity-100 p-1 text-zinc-600 hover:text-red-400 transition-all" title="Remove member">
+                    <button onClick={() => { if (confirm(`Remove ${member.profile?.display_name} from the group?`)) kickMember(groupId!, member.user_id) }} className="md:opacity-0 md:group-hover:opacity-100 p-1 text-zinc-600 hover:text-red-400 transition-all" title="Remove member">
                       <UserMinus className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
               )
             })}
+          </div>
+
+          {/* Mobile invite code */}
+          <div className="p-3 border-t border-zinc-800">
+            <p className="text-zinc-500 text-xs mb-1.5">Invite code</p>
+            <button
+              onClick={handleCopyCode}
+              className="flex items-center gap-2 px-3 py-2 bg-zinc-800 rounded-lg w-full hover:bg-zinc-700 transition-colors"
+            >
+              <span className="font-mono text-sm text-white tracking-wider flex-1 text-left">
+                {group?.invite_code}
+              </span>
+              {copied ? (
+                <Check className="w-4 h-4 text-green-400" />
+              ) : (
+                <Copy className="w-4 h-4 text-zinc-500" />
+              )}
+            </button>
+          </div>
+
+          {/* Mobile actions */}
+          <div className="p-3 border-t border-zinc-800 space-y-1">
+            {isCreator ? (
+              <button
+                onClick={handleEndSession}
+                className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm px-2 py-1.5 w-full rounded-lg hover:bg-zinc-800/50 transition-colors"
+              >
+                <PhoneOff className="w-4 h-4" />
+                End Session
+              </button>
+            ) : (
+              <button
+                onClick={handleLeave}
+                className="flex items-center gap-2 text-zinc-400 hover:text-zinc-300 text-sm px-2 py-1.5 w-full rounded-lg hover:bg-zinc-800/50 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Leave Group
+              </button>
+            )}
           </div>
         </div>
       )}
