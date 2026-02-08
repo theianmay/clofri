@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFriendStore } from '../stores/friendStore'
-import { usePresenceStore } from '../stores/presenceStore'
-import { useCategoryStore } from '../stores/categoryStore'
+import { usePresenceStore, type UserStatus } from '../stores/presenceStore'
+import { useCategoryStore, type FriendCategory } from '../stores/categoryStore'
 import { useDMStore } from '../stores/dmStore'
+import type { Profile, Friendship } from '../types/database'
 import {
   UserPlus,
   Check,
@@ -16,8 +17,96 @@ import {
   Tag,
   Plus,
   MessageCircle,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
+
+function FriendCard({
+  friendship,
+  friend,
+  status,
+  isOffline,
+  tagMenuOpen,
+  setTagMenuOpen,
+  categories,
+  assignFriend,
+  handleStartDM,
+  handleRemove,
+}: {
+  friendship: Friendship
+  friend: Profile
+  status: UserStatus
+  isOffline: boolean
+  tagMenuOpen: string | null
+  setTagMenuOpen: (id: string | null) => void
+  categories: FriendCategory[]
+  assignFriend: (friendshipId: string, categoryId: string | null) => void
+  handleStartDM: (friendId: string) => void
+  handleRemove: (friendshipId: string) => void
+}) {
+  const statusColor = status === 'active' ? 'bg-green-500' : status === 'idle' ? 'bg-amber-400' : 'bg-zinc-600'
+  const statusText = status === 'active' ? 'Active' : status === 'idle' ? 'Idle' : 'Offline'
+  const statusTextColor = status === 'active' ? 'text-green-400/70' : status === 'idle' ? 'text-amber-400/70' : 'text-zinc-600'
+
+  return (
+    <div
+      className={`flex items-center gap-3 p-3 rounded-xl border group ${
+        isOffline
+          ? 'bg-zinc-900/50 border-zinc-800/50'
+          : 'bg-zinc-900 border-zinc-800'
+      }`}
+    >
+      <div className="relative">
+        <AvatarIcon
+          avatarUrl={friend.avatar_url}
+          displayName={friend.display_name}
+          className={isOffline ? 'opacity-50' : undefined}
+        />
+        <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 ${statusColor} rounded-full border-2 border-zinc-900`} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-medium truncate ${isOffline ? 'text-zinc-400' : 'text-white'}`}>
+          {friend.display_name}
+        </p>
+        <p className={`text-xs ${statusTextColor}`}>{statusText}</p>
+      </div>
+      <div className="relative">
+        <button
+          onClick={() => setTagMenuOpen(tagMenuOpen === friendship.id ? null : friendship.id)}
+          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-zinc-300 rounded-lg transition-all"
+          title="Set category"
+        >
+          <Tag className="w-3.5 h-3.5" />
+        </button>
+        {tagMenuOpen === friendship.id && (
+          <div className="absolute right-0 top-full mt-1 z-20 bg-zinc-800 border border-zinc-700 rounded-lg py-1 min-w-[120px] shadow-xl">
+            <button onClick={() => { assignFriend(friendship.id, null); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-700 text-left">None</button>
+            {categories.map((c) => (
+              <button key={c.id} onClick={() => { assignFriend(friendship.id, c.id); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-white hover:bg-zinc-700 text-left flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${c.color}`} /> {c.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <button
+        onClick={() => handleStartDM(friend.id)}
+        className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-blue-400 rounded-lg transition-all"
+        title="Message"
+      >
+        <MessageCircle className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => handleRemove(friendship.id)}
+        className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
+        title="Remove friend"
+      >
+        <UserMinus className="w-4 h-4" />
+      </button>
+    </div>
+  )
+}
 
 export function Friends() {
   const {
@@ -42,33 +131,70 @@ export function Friends() {
   const [actionLoading, setActionLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [filterCategory, setFilterCategory] = useState<string | null>(null)
   const [showNewCategory, setShowNewCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [tagMenuOpen, setTagMenuOpen] = useState<string | null>(null)
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => new Set())
 
   useEffect(() => {
     fetchFriends()
   }, [fetchFriends])
 
-  // Filter by category, then split into active/idle/offline
-  const filtered = useMemo(() => {
-    if (!filterCategory) return friends
-    return friends.filter((f) => assignments[f.friendship.id] === filterCategory)
-  }, [friends, filterCategory, assignments])
+  const toggleSection = (sectionId: string) => {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev)
+      if (next.has(sectionId)) next.delete(sectionId)
+      else next.add(sectionId)
+      return next
+    })
+  }
 
-  const { activeFriends, idleFriends, offlineFriends } = useMemo(() => {
-    const active: typeof friends = []
-    const idle: typeof friends = []
-    const offline: typeof friends = []
-    for (const f of filtered) {
-      const status = getStatus(f.friend.id)
-      if (status === 'active') active.push(f)
-      else if (status === 'idle') idle.push(f)
-      else offline.push(f)
+  // Sort helper: active first, then idle, then offline
+  const statusOrder = (friendId: string) => {
+    const s = getStatus(friendId)
+    return s === 'active' ? 0 : s === 'idle' ? 1 : 2
+  }
+
+  // Group friends by category, sorted by online status within each group
+  const { categoryGroups, uncategorized, totalActive, totalIdle } = useMemo(() => {
+    const grouped = new Map<string, typeof friends>()
+    const uncat: typeof friends = []
+
+    for (const f of friends) {
+      const catId = assignments[f.friendship.id]
+      if (catId && categories.some((c) => c.id === catId)) {
+        if (!grouped.has(catId)) grouped.set(catId, [])
+        grouped.get(catId)!.push(f)
+      } else {
+        uncat.push(f)
+      }
     }
-    return { activeFriends: active, idleFriends: idle, offlineFriends: offline }
-  }, [filtered, onlineUsers])
+
+    // Sort each group by status
+    const sortByStatus = (a: typeof friends[0], b: typeof friends[0]) =>
+      statusOrder(a.friend.id) - statusOrder(b.friend.id)
+
+    const catGroups = categories
+      .map((cat) => ({
+        category: cat,
+        friends: (grouped.get(cat.id) || []).sort(sortByStatus),
+      }))
+      .filter((g) => g.friends.length > 0)
+
+    let active = 0, idle = 0
+    for (const f of friends) {
+      const s = getStatus(f.friend.id)
+      if (s === 'active') active++
+      else if (s === 'idle') idle++
+    }
+
+    return {
+      categoryGroups: catGroups,
+      uncategorized: uncat.sort(sortByStatus),
+      totalActive: active,
+      totalIdle: idle,
+    }
+  }, [friends, assignments, categories, onlineUsers])
 
   const handleAddCategory = () => {
     const name = newCategoryName.trim()
@@ -121,14 +247,14 @@ export function Friends() {
           <div>
             <h1 className="text-xl font-semibold text-white">Friends</h1>
             <p className="text-zinc-500 text-sm mt-1">
-              {activeFriends.length > 0 && (
-                <span className="text-green-400">{activeFriends.length} active</span>
+              {totalActive > 0 && (
+                <span className="text-green-400">{totalActive} active</span>
               )}
-              {activeFriends.length > 0 && idleFriends.length > 0 && ' · '}
-              {idleFriends.length > 0 && (
-                <span className="text-amber-400">{idleFriends.length} idle</span>
+              {totalActive > 0 && totalIdle > 0 && ' · '}
+              {totalIdle > 0 && (
+                <span className="text-amber-400">{totalIdle} idle</span>
               )}
-              {(activeFriends.length > 0 || idleFriends.length > 0) && ' · '}
+              {(totalActive > 0 || totalIdle > 0) && ' · '}
               {friends.length} total
             </p>
           </div>
@@ -174,42 +300,25 @@ export function Friends() {
         )}
       </div>
 
-      {/* Category filter bar */}
+      {/* Category management bar */}
       {friends.length > 0 && (
         <div className="px-6 py-3 border-b border-zinc-800 flex items-center gap-2 flex-wrap">
           <Tag className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-          <button
-            onClick={() => setFilterCategory(null)}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              !filterCategory ? 'bg-zinc-700 text-white' : 'bg-zinc-800/50 text-zinc-400 hover:text-white'
-            }`}
-          >
-            All
-          </button>
-          {categories.map((cat) => {
-            const count = friends.filter((f) => assignments[f.friendship.id] === cat.id).length
-            return (
-              <div key={cat.id} className="flex items-center gap-0.5">
-                <button
-                  onClick={() => setFilterCategory(filterCategory === cat.id ? null : cat.id)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                    filterCategory === cat.id ? 'bg-zinc-700 text-white' : 'bg-zinc-800/50 text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  <span className={`w-2 h-2 rounded-full ${cat.color}`} />
-                  {cat.name}
-                  {count > 0 && <span className="text-zinc-500">{count}</span>}
-                </button>
-                <button
-                  onClick={() => { removeCategory(cat.id); if (filterCategory === cat.id) setFilterCategory(null) }}
-                  className="p-0.5 text-zinc-600 hover:text-red-400 transition-colors"
-                  title="Delete category"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            )
-          })}
+          {categories.map((cat) => (
+            <div key={cat.id} className="flex items-center gap-0.5">
+              <span className={`px-2.5 py-1 rounded-full text-xs font-medium bg-zinc-800/50 text-zinc-400 flex items-center gap-1.5`}>
+                <span className={`w-2 h-2 rounded-full ${cat.color}`} />
+                {cat.name}
+              </span>
+              <button
+                onClick={() => removeCategory(cat.id)}
+                className="p-0.5 text-zinc-600 hover:text-red-400 transition-colors"
+                title="Delete category"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
           {showNewCategory ? (
             <form
               onSubmit={(e) => { e.preventDefault(); handleAddCategory() }}
@@ -243,7 +352,7 @@ export function Friends() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 text-zinc-500 animate-spin" />
@@ -316,213 +425,113 @@ export function Friends() {
               </section>
             )}
 
-            {/* Active friends */}
-            {activeFriends.length > 0 && (
+            {/* Category sections */}
+            {categoryGroups.map(({ category, friends: catFriends }) => {
+              const isCollapsed = collapsedSections.has(category.id)
+              const activeCount = catFriends.filter((f) => getStatus(f.friend.id) === 'active').length
+              const idleCount = catFriends.filter((f) => getStatus(f.friend.id) === 'idle').length
+              return (
+                <section key={category.id}>
+                  <button
+                    onClick={() => toggleSection(category.id)}
+                    className="w-full flex items-center gap-2 mb-2 px-1 group/header"
+                  >
+                    {isCollapsed ? (
+                      <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                    )}
+                    <span className={`w-2.5 h-2.5 rounded-full ${category.color}`} />
+                    <span className="text-zinc-300 text-xs font-semibold uppercase tracking-wider">
+                      {category.name}
+                    </span>
+                    <span className="text-zinc-600 text-xs">
+                      {catFriends.length}
+                      {activeCount > 0 && <span className="text-green-400 ml-1">· {activeCount} on</span>}
+                      {idleCount > 0 && <span className="text-amber-400 ml-1">· {idleCount} idle</span>}
+                    </span>
+                  </button>
+                  {!isCollapsed && (
+                    <div className="space-y-1">
+                      {catFriends.map(({ friendship, friend }) => {
+                        const status = getStatus(friend.id)
+                        const isOffline = status === 'offline'
+                        return (
+                          <FriendCard
+                            key={friendship.id}
+                            friendship={friendship}
+                            friend={friend}
+                            status={status}
+                            isOffline={isOffline}
+                            tagMenuOpen={tagMenuOpen}
+                            setTagMenuOpen={setTagMenuOpen}
+                            categories={categories}
+                            assignFriend={assignFriend}
+                            handleStartDM={handleStartDM}
+                            handleRemove={handleRemove}
+                          />
+                        )
+                      })}
+                    </div>
+                  )}
+                </section>
+              )
+            })}
+
+            {/* Uncategorized section */}
+            {uncategorized.length > 0 && (
               <section>
-                <h3 className="text-green-400 text-xs font-semibold uppercase tracking-wider mb-2 px-1 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-green-400" />
-                  Active — {activeFriends.length}
-                </h3>
-                <div className="space-y-1">
-                  {activeFriends.map(({ friendship, friend }) => {
-                    const cat = categories.find((c) => c.id === assignments[friendship.id])
-                    return (
-                      <div
-                        key={friendship.id}
-                        className="flex items-center gap-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800 group"
-                      >
-                        <div className="relative">
-                          <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} />
-                          <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-zinc-900" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-white text-sm font-medium truncate">{friend.display_name}</p>
-                            {cat && <span className={`w-1.5 h-1.5 rounded-full ${cat.color} shrink-0`} title={cat.name} />}
-                          </div>
-                          <p className="text-green-400/70 text-xs">Active</p>
-                        </div>
-                        <div className="relative">
-                          <button
-                            onClick={() => setTagMenuOpen(tagMenuOpen === friendship.id ? null : friendship.id)}
-                            className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-zinc-300 rounded-lg transition-all"
-                            title="Set category"
-                          >
-                            <Tag className="w-3.5 h-3.5" />
-                          </button>
-                          {tagMenuOpen === friendship.id && (
-                            <div className="absolute right-0 top-full mt-1 z-20 bg-zinc-800 border border-zinc-700 rounded-lg py-1 min-w-[120px] shadow-xl">
-                              <button onClick={() => { assignFriend(friendship.id, null); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-700 text-left">None</button>
-                              {categories.map((c) => (
-                                <button key={c.id} onClick={() => { assignFriend(friendship.id, c.id); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-white hover:bg-zinc-700 text-left flex items-center gap-2">
-                                  <span className={`w-2 h-2 rounded-full ${c.color}`} /> {c.name}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleStartDM(friend.id)}
-                          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-blue-400 rounded-lg transition-all"
-                          title="Message"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleRemove(friendship.id)}
-                          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
-                          title="Remove friend"
-                        >
-                          <UserMinus className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
+                <button
+                  onClick={() => toggleSection('__uncategorized')}
+                  className="w-full flex items-center gap-2 mb-2 px-1"
+                >
+                  {collapsedSections.has('__uncategorized') ? (
+                    <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                  )}
+                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-600" />
+                  <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">
+                    {categoryGroups.length > 0 ? 'Uncategorized' : 'Friends'}
+                  </span>
+                  <span className="text-zinc-600 text-xs">{uncategorized.length}</span>
+                </button>
+                {!collapsedSections.has('__uncategorized') && (
+                  <div className="space-y-1">
+                    {uncategorized.map(({ friendship, friend }) => {
+                      const status = getStatus(friend.id)
+                      const isOffline = status === 'offline'
+                      return (
+                        <FriendCard
+                          key={friendship.id}
+                          friendship={friendship}
+                          friend={friend}
+                          status={status}
+                          isOffline={isOffline}
+                          tagMenuOpen={tagMenuOpen}
+                          setTagMenuOpen={setTagMenuOpen}
+                          categories={categories}
+                          assignFriend={assignFriend}
+                          handleStartDM={handleStartDM}
+                          handleRemove={handleRemove}
+                        />
+                      )
+                    })}
+                  </div>
+                )}
               </section>
             )}
 
-            {/* Idle friends */}
-            {idleFriends.length > 0 && (
-              <section>
-                <h3 className="text-amber-400 text-xs font-semibold uppercase tracking-wider mb-2 px-1 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-400" />
-                  Idle — {idleFriends.length}
-                </h3>
-                <div className="space-y-1">
-                  {idleFriends.map(({ friendship, friend }) => {
-                    const cat = categories.find((c) => c.id === assignments[friendship.id])
-                    return (
-                      <div
-                        key={friendship.id}
-                        className="flex items-center gap-3 p-3 bg-zinc-900/80 rounded-xl border border-zinc-800 group"
-                      >
-                        <div className="relative">
-                          <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} />
-                          <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-amber-400 rounded-full border-2 border-zinc-900" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-zinc-300 text-sm font-medium truncate">{friend.display_name}</p>
-                            {cat && <span className={`w-1.5 h-1.5 rounded-full ${cat.color} shrink-0`} title={cat.name} />}
-                          </div>
-                          <p className="text-amber-400/70 text-xs">Idle</p>
-                        </div>
-                        <div className="relative">
-                          <button
-                            onClick={() => setTagMenuOpen(tagMenuOpen === friendship.id ? null : friendship.id)}
-                            className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-zinc-300 rounded-lg transition-all"
-                            title="Set category"
-                          >
-                            <Tag className="w-3.5 h-3.5" />
-                          </button>
-                          {tagMenuOpen === friendship.id && (
-                            <div className="absolute right-0 top-full mt-1 z-20 bg-zinc-800 border border-zinc-700 rounded-lg py-1 min-w-[120px] shadow-xl">
-                              <button onClick={() => { assignFriend(friendship.id, null); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-700 text-left">None</button>
-                              {categories.map((c) => (
-                                <button key={c.id} onClick={() => { assignFriend(friendship.id, c.id); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-white hover:bg-zinc-700 text-left flex items-center gap-2">
-                                  <span className={`w-2 h-2 rounded-full ${c.color}`} /> {c.name}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleStartDM(friend.id)}
-                          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-blue-400 rounded-lg transition-all"
-                          title="Message"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleRemove(friendship.id)}
-                          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
-                          title="Remove friend"
-                        >
-                          <UserMinus className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-              </section>
+            {/* Empty state */}
+            {friends.length === 0 && (
+              <div className="text-center py-12">
+                <Users className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
+                <p className="text-zinc-500 text-sm">No friends yet</p>
+                <p className="text-zinc-600 text-xs mt-1">
+                  Share your friend code or add someone by theirs
+                </p>
+              </div>
             )}
-
-            {/* Offline friends */}
-            <section>
-              <h3 className="text-zinc-500 text-xs font-semibold uppercase tracking-wider mb-2 px-1 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-zinc-600" />
-                {(activeFriends.length > 0 || idleFriends.length > 0) ? `Offline — ${offlineFriends.length}` : `Friends — ${friends.length}`}
-              </h3>
-              {friends.length === 0 ? (
-                <div className="text-center py-12">
-                  <Users className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
-                  <p className="text-zinc-500 text-sm">No friends yet</p>
-                  <p className="text-zinc-600 text-xs mt-1">
-                    Share your friend code or add someone by theirs
-                  </p>
-                </div>
-              ) : offlineFriends.length === 0 ? (
-                <p className="text-zinc-600 text-xs px-1">Everyone's here!</p>
-              ) : (
-                <div className="space-y-1">
-                  {offlineFriends.map(({ friendship, friend }) => {
-                    const cat = categories.find((c) => c.id === assignments[friendship.id])
-                    return (
-                      <div
-                        key={friendship.id}
-                        className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-xl border border-zinc-800/50 group"
-                      >
-                        <div className="relative">
-                          <AvatarIcon avatarUrl={friend.avatar_url} displayName={friend.display_name} className="opacity-50" />
-                          <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-zinc-600 rounded-full border-2 border-zinc-900" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-zinc-400 text-sm font-medium truncate">{friend.display_name}</p>
-                            {cat && <span className={`w-1.5 h-1.5 rounded-full ${cat.color} shrink-0`} title={cat.name} />}
-                          </div>
-                          <p className="text-zinc-600 text-xs">Offline</p>
-                        </div>
-                        <div className="relative">
-                          <button
-                            onClick={() => setTagMenuOpen(tagMenuOpen === friendship.id ? null : friendship.id)}
-                            className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-zinc-300 rounded-lg transition-all"
-                            title="Set category"
-                          >
-                            <Tag className="w-3.5 h-3.5" />
-                          </button>
-                          {tagMenuOpen === friendship.id && (
-                            <div className="absolute right-0 top-full mt-1 z-20 bg-zinc-800 border border-zinc-700 rounded-lg py-1 min-w-[120px] shadow-xl">
-                              <button onClick={() => { assignFriend(friendship.id, null); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-700 text-left">None</button>
-                              {categories.map((c) => (
-                                <button key={c.id} onClick={() => { assignFriend(friendship.id, c.id); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-white hover:bg-zinc-700 text-left flex items-center gap-2">
-                                  <span className={`w-2 h-2 rounded-full ${c.color}`} /> {c.name}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleStartDM(friend.id)}
-                          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-blue-400 rounded-lg transition-all"
-                          title="Message"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleRemove(friendship.id)}
-                          className="opacity-0 group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
-                          title="Remove friend"
-                        >
-                          <UserMinus className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </section>
           </>
         )}
       </div>
