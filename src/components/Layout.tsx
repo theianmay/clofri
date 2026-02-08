@@ -66,15 +66,16 @@ export function Layout() {
   }
 
   const saveName = async () => {
+    if (!editingName) return
+    setEditingName(false)
     const trimmed = nameInput.trim()
     if (trimmed && trimmed !== profile?.display_name) {
       await updateProfile({ display_name: trimmed })
     }
-    setEditingName(false)
   }
 
   const handleNameKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') saveName()
+    if (e.key === 'Enter') { e.preventDefault(); saveName() }
     if (e.key === 'Escape') setEditingName(false)
   }
 
@@ -154,8 +155,50 @@ export function Layout() {
               <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColor} rounded-full border-2 border-zinc-900`} />
             </button>
             <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-medium truncate">{profile?.display_name}</p>
-              <p className="text-zinc-500 text-xs">{profile?.friend_code}</p>
+              {editingName ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    ref={nameInputRef}
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    onBlur={saveName}
+                    onKeyDown={handleNameKeyDown}
+                    className="flex-1 min-w-0 bg-zinc-800 text-white text-sm font-medium px-1.5 py-0.5 rounded border border-zinc-600 focus:border-blue-500 focus:outline-none"
+                    maxLength={30}
+                  />
+                  <button
+                    onMouseDown={(e) => { e.preventDefault(); saveName() }}
+                    className="p-0.5 text-green-400 hover:text-green-300 transition-colors shrink-0"
+                    title="Save name"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={startEditingName}
+                  className="flex items-center gap-1 text-white text-sm font-medium truncate hover:text-zinc-300 transition-colors group/name"
+                >
+                  <span className="truncate">{profile?.display_name}</span>
+                  <Pencil className="w-3 h-3 text-zinc-600 group-hover/name:text-zinc-400 shrink-0" />
+                </button>
+              )}
+              <button
+                onClick={copyFriendCode}
+                className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3 text-green-400" />
+                    <span className="text-green-400">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>{profile?.friend_code}</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
           <div className="space-y-0.5">
@@ -289,15 +332,24 @@ export function Layout() {
                 </button>
                 <div className="flex-1 min-w-0">
                   {editingName ? (
-                    <input
-                      ref={nameInputRef}
-                      value={nameInput}
-                      onChange={(e) => setNameInput(e.target.value)}
-                      onBlur={saveName}
-                      onKeyDown={handleNameKeyDown}
-                      className="w-full bg-zinc-800 text-white text-sm font-medium px-1.5 py-0.5 rounded border border-zinc-600 focus:border-blue-500 focus:outline-none"
-                      maxLength={30}
-                    />
+                    <div className="flex items-center gap-1">
+                      <input
+                        ref={nameInputRef}
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        onBlur={saveName}
+                        onKeyDown={handleNameKeyDown}
+                        className="flex-1 min-w-0 bg-zinc-800 text-white text-sm font-medium px-1.5 py-0.5 rounded border border-zinc-600 focus:border-blue-500 focus:outline-none"
+                        maxLength={30}
+                      />
+                      <button
+                        onMouseDown={(e) => { e.preventDefault(); saveName() }}
+                        className="p-0.5 text-green-400 hover:text-green-300 transition-colors shrink-0"
+                        title="Save name"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   ) : (
                     <button
                       onClick={startEditingName}
