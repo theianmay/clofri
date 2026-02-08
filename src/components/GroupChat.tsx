@@ -12,9 +12,10 @@ import {
   Crown,
   UserMinus,
   LogOut,
-  Trash2,
   Circle,
   PhoneOff,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
 
@@ -22,7 +23,7 @@ export function GroupChat() {
   const { groupId } = useParams<{ groupId: string }>()
   const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
-  const { groups, fetchGroups, leaveGroup, deleteGroup, endGroupSession, kickMember, markRead } = useGroupStore()
+  const { groups, fetchGroups, leaveGroup, endGroupSession, kickMember, markRead } = useGroupStore()
   const group = groups.find((g) => g.id === groupId)
 
   const { messages, members, typingUsers, sendMessage, sendTyping } = useChat({
@@ -78,12 +79,6 @@ export function GroupChat() {
     navigate('/groups')
   }
 
-  const handleDelete = async () => {
-    if (!groupId || !confirm('Delete this group? This cannot be undone.')) return
-    await deleteGroup(groupId)
-    navigate('/groups')
-  }
-
   const handleEndSession = async () => {
     if (!groupId || !confirm('End this session? All messages will be deleted and the group will close.')) return
     await endGroupSession(groupId)
@@ -120,7 +115,7 @@ export function GroupChat() {
           </div>
           <button
             onClick={() => setShowMembers(!showMembers)}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-2 rounded-lg transition-colors md:hidden ${
               showMembers
                 ? 'bg-zinc-800 text-white'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
@@ -203,14 +198,33 @@ export function GroupChat() {
         </form>
       </div>
 
-      {/* Members sidebar */}
-      {showMembers && (
-        <div className="w-64 border-l border-zinc-800 flex flex-col bg-zinc-900">
+      {/* Members sidebar — collapsed rail on desktop when hidden */}
+      <div className={`hidden md:flex border-l border-zinc-800 flex-col bg-zinc-900 transition-all duration-200 ${showMembers ? 'w-64' : 'w-12'}`}>
+        {!showMembers ? (
+          <div className="flex flex-col items-center gap-2 pt-4">
+            <Users className="w-4 h-4 text-zinc-400" />
+            <button onClick={() => setShowMembers(true)} className="p-1 text-zinc-500 hover:text-white transition-colors" title="Show members">
+              <ChevronsLeft className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <>
           <div className="p-4 border-b border-zinc-800">
-            <h3 className="text-white font-semibold text-sm">Members</h3>
-            <p className="text-zinc-500 text-xs mt-0.5">
-              {group?.members.length || 0} total · {members.length} online
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-white font-semibold text-sm">Members</h3>
+                <p className="text-zinc-500 text-xs mt-0.5">
+                  {group?.members.length || 0} total · {members.length} online
+                </p>
+              </div>
+              <button
+                onClick={() => setShowMembers(false)}
+                className="p-1 text-zinc-500 hover:text-white transition-colors"
+                title="Collapse"
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Invite code */}
@@ -281,22 +295,13 @@ export function GroupChat() {
 
           {/* Actions */}
           <div className="p-3 border-t border-zinc-800 space-y-1">
-            {isCreator && (
+            {isCreator ? (
               <button
                 onClick={handleEndSession}
-                className="flex items-center gap-2 text-amber-400 hover:text-amber-300 text-sm px-2 py-1.5 w-full rounded-lg hover:bg-zinc-800/50 transition-colors"
+                className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm px-2 py-1.5 w-full rounded-lg hover:bg-zinc-800/50 transition-colors"
               >
                 <PhoneOff className="w-4 h-4" />
                 End Session
-              </button>
-            )}
-            {isCreator ? (
-              <button
-                onClick={handleDelete}
-                className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm px-2 py-1.5 w-full rounded-lg hover:bg-zinc-800/50 transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Group
               </button>
             ) : (
               <button
@@ -307,6 +312,45 @@ export function GroupChat() {
                 Leave Group
               </button>
             )}
+          </div>
+          </>
+        )}
+      </div>
+
+      {/* Mobile members sidebar */}
+      {showMembers && (
+        <div className="md:hidden w-64 border-l border-zinc-800 flex flex-col bg-zinc-900">
+          <div className="p-4 border-b border-zinc-800">
+            <h3 className="text-white font-semibold text-sm">Members</h3>
+            <p className="text-zinc-500 text-xs mt-0.5">
+              {group?.members.length || 0} total · {members.length} online
+            </p>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-1">
+            {group?.members.map((member) => {
+              const isOnline = onlineUserIds.has(member.user_id)
+              const isMemberCreator = member.role === 'creator'
+              const canKick = isCreator && member.user_id !== profile?.id
+              return (
+                <div key={member.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-zinc-800/50 group">
+                  <div className="relative">
+                    <AvatarIcon avatarUrl={member.profile?.avatar_url || null} displayName={member.profile?.display_name || ''} size="sm" />
+                    <Circle className={`w-2.5 h-2.5 absolute -bottom-0.5 -right-0.5 ${isOnline ? 'text-green-500 fill-green-500' : 'text-zinc-600 fill-zinc-600'}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <span className={`text-sm truncate ${isOnline ? 'text-white' : 'text-zinc-500'}`}>{member.profile?.display_name}</span>
+                      {isMemberCreator && <Crown className="w-3 h-3 text-amber-400 shrink-0" />}
+                    </div>
+                  </div>
+                  {canKick && (
+                    <button onClick={() => kickMember(groupId!, member.user_id)} className="opacity-0 group-hover:opacity-100 p-1 text-zinc-600 hover:text-red-400 transition-all" title="Remove member">
+                      <UserMinus className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
