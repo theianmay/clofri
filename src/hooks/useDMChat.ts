@@ -100,12 +100,16 @@ export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
       }, 3000)
     })
 
-    channel.subscribe()
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('[DM] Channel subscribed:', channelName)
+      }
+    })
 
     channelRef.current = channel
 
     return () => {
-      channel.unsubscribe()
+      supabase.removeChannel(channel)
       channelRef.current = null
     }
   }, [sessionId, friendId, profile])
@@ -168,6 +172,8 @@ export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
         type: 'broadcast',
         event: 'typing',
         payload: { sender_id: profile.id, display_name: profile.display_name },
+      }).then((status) => {
+        if (status !== 'ok') console.warn('[DM] Typing send failed:', status)
       })
     }
 

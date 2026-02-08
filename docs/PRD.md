@@ -90,9 +90,8 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | CAT-4 | As a user, I can delete a category (friends in it become uncategorized) | ✅ Done | Removes category and all its assignments |
 | CAT-5 | As a user, my categories persist across page refreshes | ✅ Done | localStorage persistence |
 | CAT-6 | As a user, my categories should sync across devices | 🔲 Future | Currently localStorage only — needs Supabase migration |
-| CAT-7 | As a user, I see my friends grouped into collapsible sections by category, with online friends sorted to top within each section | 🔲 Planned | Category A (expanded): friend1 online, friend2 online → Category B → ... → Offline section at bottom |
+| CAT-7 | As a user, I see my friends grouped into collapsible sections by category, with each friend showing their online/offline status within the section | 🔲 Planned | Category A (expanded): friend1 🟢, friend2 ⚫ → Category B → ... Online friends sorted to top within each category |
 | CAT-8 | As a user, I can expand/collapse each category section to focus on the group I care about | 🔲 Planned | Collapsible accordion-style sections |
-| CAT-9 | As a user, I see an "Offline" section at the bottom that contains all offline friends regardless of category | 🔲 Planned | Auto-generated section, not a user-created category |
 
 ---
 
@@ -240,7 +239,7 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 ## 4. Known Gaps & Future Work
 
 ### Short-term (polish before deploy)
-- **CAT-7/8/9**: Collapsible category sections on Friends page with Offline section at bottom
+- **CAT-7/8**: Collapsible category sections on Friends page with online/offline status within each
 - **NAV-7**: Branded favicon
 - **AUTH-8**: Customized magic link email template
 - **GRP-11**: Group session ended notification — broadcast `group_ended` on lobby so members are notified/redirected

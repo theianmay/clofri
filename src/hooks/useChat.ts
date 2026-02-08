@@ -147,7 +147,7 @@ export function useChat({ groupId }: UseChatOptions) {
     channelRef.current = channel
 
     return () => {
-      channel.unsubscribe()
+      supabase.removeChannel(channel)
       channelRef.current = null
     }
   }, [groupId, profile])
