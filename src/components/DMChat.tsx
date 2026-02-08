@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/authStore'
 import { useDMStore } from '../stores/dmStore'
 import { useDMChat } from '../hooks/useDMChat'
 import { usePresenceStore } from '../stores/presenceStore'
-import { ArrowLeft, Send, XCircle, ArrowDown, Hand } from 'lucide-react'
+import { ArrowLeft, Send, XCircle, ArrowDown, Hand, WifiOff } from 'lucide-react'
 import { ConfirmDialog } from './ConfirmDialog'
 import { AvatarIcon } from './AvatarIcon'
 import { linkifyText } from '../lib/linkify'
@@ -252,36 +252,45 @@ export function DMChat() {
         </p>
       </div>
 
-      {/* Input */}
-      <form onSubmit={handleSend} className="p-4 border-t border-zinc-800">
-        <div className="flex gap-2">
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={handleInput}
-            placeholder="Type a message..."
-            maxLength={2000}
-            className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-4 py-2.5 rounded-xl border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm"
-          />
-          <button
-            type="button"
-            onClick={handleSendNudge}
-            disabled={nudgeCooldown}
-            title={nudgeCooldown ? 'Nudge on cooldown' : 'Send a nudge'}
-            className="p-2.5 text-zinc-400 hover:text-amber-400 rounded-xl border border-zinc-700 hover:border-amber-400/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <Hand className="w-4 h-4" />
-          </button>
-          <button
-            type="submit"
-            disabled={!input.trim()}
-            className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <Send className="w-4 h-4" />
-          </button>
+      {/* Input — disabled when friend is offline */}
+      {status === 'offline' ? (
+        <div className="p-4 border-t border-zinc-800">
+          <div className="flex items-center justify-center gap-2 py-2.5 bg-zinc-800/50 rounded-xl border border-zinc-700/50">
+            <WifiOff className="w-4 h-4 text-zinc-500" />
+            <span className="text-zinc-500 text-sm">{friend?.display_name || 'Friend'} is offline — messages can't be delivered</span>
+          </div>
         </div>
-      </form>
+      ) : (
+        <form onSubmit={handleSend} className="p-4 border-t border-zinc-800">
+          <div className="flex gap-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={handleInput}
+              placeholder="Type a message..."
+              maxLength={2000}
+              className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-4 py-2.5 rounded-xl border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm"
+            />
+            <button
+              type="button"
+              onClick={handleSendNudge}
+              disabled={nudgeCooldown}
+              title={nudgeCooldown ? 'Nudge on cooldown' : 'Send a nudge'}
+              className="p-2.5 text-zinc-400 hover:text-amber-400 rounded-xl border border-zinc-700 hover:border-amber-400/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <Hand className="w-4 h-4" />
+            </button>
+            <button
+              type="submit"
+              disabled={!input.trim()}
+              className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        </form>
+      )}
 
       <ConfirmDialog
         open={showEndConfirm}
