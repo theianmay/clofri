@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { MessageCircle, Users, LogOut, Copy, Check, Pencil, Menu, X, ChevronsLeft, Volume2, VolumeX, Mail } from 'lucide-react'
+import { MessageCircle, Users, LogOut, Copy, Check, Pencil, Menu, X, ChevronsLeft, ChevronsRight, Volume2, VolumeX, Mail } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { ConnectionBanner } from './ConnectionBanner'
 import { usePresenceStore } from '../stores/presenceStore'
@@ -104,7 +104,7 @@ export function Layout() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                <MessageCircle className="w-4 h-4 text-white" />
+                <span className="text-white font-bold text-xs">cf</span>
               </div>
               <span className="text-white font-semibold text-lg">clofri</span>
             </div>
@@ -152,14 +152,14 @@ export function Layout() {
         {/* Header */}
         <div className={`border-b border-zinc-800 flex items-center ${collapsed ? 'p-3 justify-center' : 'p-4 justify-between'}`}>
           {collapsed ? (
-            <button onClick={toggleCollapsed} className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center hover:bg-blue-500 transition-colors" title="Expand sidebar">
-              <MessageCircle className="w-4 h-4 text-white" />
+            <button onClick={toggleCollapsed} className="p-2 text-zinc-500 hover:text-white transition-colors rounded-lg hover:bg-zinc-800" title="Expand sidebar">
+              <ChevronsRight className="w-4 h-4" />
             </button>
           ) : (
             <>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                  <MessageCircle className="w-4 h-4 text-white" />
+                  <span className="text-white font-bold text-xs">cf</span>
                 </div>
                 <span className="text-white font-semibold text-lg">clofri</span>
               </div>

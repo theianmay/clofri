@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuthStore } from '../stores/authStore'
-import { MessageCircle, Mail, Loader2 } from 'lucide-react'
+import { Mail, Loader2 } from 'lucide-react'
 
 export function Login() {
   const { signInWithMagicLink } = useAuthStore()
@@ -28,7 +28,7 @@ export function Login() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4">
-            <MessageCircle className="w-8 h-8 text-white" />
+            <span className="text-white font-bold text-2xl">cf</span>
           </div>
           <h1 className="text-3xl font-bold text-white">clofri</h1>
           <p className="text-zinc-400 mt-2">chat with your close friends</p>
