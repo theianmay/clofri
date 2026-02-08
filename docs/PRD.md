@@ -67,14 +67,14 @@ clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | FRI-2 | As a user, I see an error if I enter my own code, an invalid code, or a code for an existing friend | ✅ Done | Validation in `sendRequest` |
 | FRI-3 | As a user, I can see incoming friend requests and accept or reject them | ✅ Done | `pendingReceived` list with accept/reject buttons |
 | FRI-4 | As a user, I can see outgoing friend requests that are still pending | ✅ Done | `pendingSent` list with "Pending" badge |
-| FRI-5 | As a user, I can remove an existing friend | ✅ Done | Confirm dialog → `removeFriend` deletes the friendship row |
+| FRI-5 | As a user, I can remove an existing friend | ✅ Done | Custom ConfirmDialog → `removeFriend` deletes the friendship row |
 | FRI-6 | As a user, I can see each friend's online status (active/idle/offline) on the Friends page | ✅ Done | Presence dots (green/amber/gray) via lobby channel |
 | FRI-7 | As a user, I can start a DM with a friend by clicking the message icon | ✅ Done | Creates/reuses dm_session, navigates to `/dm/:sessionId` |
 | FRI-8 | As a user, I can filter my friends list by category | ✅ Done | Category filter dropdown on Friends page |
 | FRI-9 | As a user, I receive a success message after sending a friend request | ✅ Done | Green success toast |
 | FRI-10 | As a user, the friend request UI resets after a successful send | ✅ Done | Input clears, panel can close |
 | FRI-11 | As a user, I should be notified in real-time when I receive a friend request | ✅ Done | `friend_request` lobby broadcast → sound + fetchFriends |
-| FRI-12 | As a user, I should be able to search/filter my friends list by name | ✅ Done | Search input (shown when >3 friends) filters across all categories |
+| FRI-12 | As a user, I should be able to search/filter my friends list by name | ✅ Done | Search input filters friends, sent/received requests; auto-expands collapsed sections |
 | FRI-13 | As a user, I can cancel a sent friend request that is still pending | ✅ Done | X button on sent request cards, deletes the friendship row |
 
 ---
@@ -263,6 +263,8 @@ clofri is a lightweight, real-time chat app designed for small, trusted friend g
 - ~~**UI Audit Round 2**: Mobile overlay sidebar, leave confirmation, console cleanup, maxLength on all inputs, theme-color~~ ✅
 - ~~**Chat Best Practices**: Smart auto-scroll, message grouping, auto-focus, clickable URLs~~ ✅
 - ~~**AUTH-8**: Customized magic link email template (Supabase dashboard config)~~ ✅
+- ~~**UI Audit Round 3**: Custom ConfirmDialog (replaces all browser confirm), smooth expand/collapse animations, empty state CTAs, category delete confirmation, larger touch targets, ephemeral notice readability~~ ✅
+- ~~**Bug fixes**: Friend request delivery (visibility refetch), mobile display name save (onPointerDown), group online count (lobby presence), search filtering (collapsed sections + pending sections)~~ ✅
 - **AUTH-6**: Google OAuth configuration (Google Cloud Console setup) — *optional, can do post-deploy*
 
 ### Medium-term (post-validation)
