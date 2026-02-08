@@ -86,6 +86,7 @@ export function Home() {
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
               autoFocus
+              maxLength={50}
               className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm"
             />
             <button
@@ -115,6 +116,7 @@ export function Home() {
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                 autoFocus
+                maxLength={10}
                 className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm font-mono tracking-wider"
               />
               <button

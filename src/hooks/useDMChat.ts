@@ -168,8 +168,6 @@ export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
         type: 'broadcast',
         event: 'typing',
         payload: { sender_id: profile.id, display_name: profile.display_name },
-      }).then((status) => {
-        if (status !== 'ok') console.warn('[DM] Typing send failed:', status)
       })
     }
 

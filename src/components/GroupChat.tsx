@@ -16,10 +16,10 @@ import {
   XCircle,
   ChevronsLeft,
   ChevronsRight,
+  ArrowDown,
 } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
 import { linkifyText } from '../lib/linkify'
-import { ArrowDown } from 'lucide-react'
 
 export function GroupChat() {
   const { groupId } = useParams<{ groupId: string }>()
@@ -106,7 +106,7 @@ export function GroupChat() {
   }
 
   const handleLeave = async () => {
-    if (!groupId) return
+    if (!groupId || !confirm('Leave this group?')) return
     await leaveGroup(groupId)
     navigate('/groups')
   }
@@ -371,9 +371,12 @@ export function GroupChat() {
         )}
       </div>
 
-      {/* Mobile members sidebar */}
+      {/* Mobile members overlay */}
       {showMembers && (
-        <div className="md:hidden w-64 border-l border-zinc-800 flex flex-col bg-zinc-900">
+        <div className="md:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setShowMembers(false)} />
+      )}
+      {showMembers && (
+        <div className="md:hidden fixed inset-y-0 right-0 z-50 w-72 border-l border-zinc-800 flex flex-col bg-zinc-900">
           <div className="p-4 border-b border-zinc-800">
             <h3 className="text-white font-semibold text-sm">Members</h3>
             <p className="text-zinc-500 text-xs mt-0.5">

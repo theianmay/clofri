@@ -86,7 +86,7 @@ async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
     .single()
 
   if (existing) return existing as Profile
-  if (selectError) console.log('Profile not found, creating...', selectError.message)
+  if (selectError && selectError.code !== 'PGRST116') console.error('Profile fetch error:', selectError.message)
 
   const displayName =
     user.user_metadata?.full_name ||
@@ -106,7 +106,6 @@ async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
     .single()
 
   if (insertError) console.error('Profile creation failed:', insertError)
-  if (created) console.log('Profile created:', (created as any).id)
 
   return created as Profile | null
 }

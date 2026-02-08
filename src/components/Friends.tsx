@@ -297,6 +297,7 @@ export function Friends() {
                 value={friendCode}
                 onChange={(e) => setFriendCode(e.target.value.toUpperCase())}
                 autoFocus
+                maxLength={10}
                 className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm font-mono tracking-wider"
               />
               <button
