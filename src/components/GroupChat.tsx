@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useGroupStore } from '../stores/groupStore'
 import { useAuthStore } from '../stores/authStore'
+import { usePresenceStore } from '../stores/presenceStore'
 import { useChat } from '../hooks/useChat'
 import {
   ArrowLeft,
@@ -29,9 +30,10 @@ export function GroupChat() {
   const { groups, fetchGroups, leaveGroup, endGroupSession, kickMember, markRead } = useGroupStore()
   const group = groups.find((g) => g.id === groupId)
 
-  const { messages, members, typingUsers, sendMessage, sendTyping } = useChat({
+  const { messages, typingUsers, sendMessage, sendTyping } = useChat({
     groupId: groupId || '',
   })
+  const { getStatus } = usePresenceStore()
 
   const [input, setInput] = useState('')
   const [showMembers, setShowMembers] = useState(false)
@@ -128,7 +130,8 @@ export function GroupChat() {
   }
 
   const isCreator = group?.creator_id === profile?.id
-  const onlineUserIds = new Set(members.map((m) => m.user_id))
+  const onlineMembers = group?.members.filter((m) => getStatus(m.user_id) !== 'offline') || []
+  const onlineCount = onlineMembers.length
 
   if (!groupId) return null
 
@@ -147,7 +150,7 @@ export function GroupChat() {
           <div className="flex-1 min-w-0">
             <h2 className="text-white font-semibold truncate">{group?.name || 'Loading...'}</h2>
             <p className="text-zinc-500 text-xs">
-              {members.length} online
+              {onlineCount} online
               {typingUsers.length > 0 && (
                 <span className="text-blue-400 ml-2">
                   {typingUsers.join(', ')} typing...
@@ -276,7 +279,7 @@ export function GroupChat() {
               <div>
                 <h3 className="text-white font-semibold text-sm">Members</h3>
                 <p className="text-zinc-500 text-xs mt-0.5">
-                  {group?.members.length || 0} total · {members.length} online
+                  {group?.members.length || 0} total · {onlineCount} online
                 </p>
               </div>
               <button
@@ -310,7 +313,8 @@ export function GroupChat() {
           {/* Member list */}
           <div className="flex-1 overflow-y-auto p-3 space-y-1">
             {group?.members.map((member) => {
-              const isOnline = onlineUserIds.has(member.user_id)
+              const memberStatus = getStatus(member.user_id)
+              const isOnline = memberStatus !== 'offline'
               const isMemberCreator = member.role === 'creator'
               const canKick = isCreator && member.user_id !== profile?.id
 
@@ -388,12 +392,12 @@ export function GroupChat() {
           <div className="p-4 border-b border-zinc-800">
             <h3 className="text-white font-semibold text-sm">Members</h3>
             <p className="text-zinc-500 text-xs mt-0.5">
-              {group?.members.length || 0} total · {members.length} online
+              {group?.members.length || 0} total · {onlineCount} online
             </p>
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-1">
             {group?.members.map((member) => {
-              const isOnline = onlineUserIds.has(member.user_id)
+              const isOnline = getStatus(member.user_id) !== 'offline'
               const isMemberCreator = member.role === 'creator'
               const canKick = isCreator && member.user_id !== profile?.id
               return (

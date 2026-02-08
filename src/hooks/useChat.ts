@@ -111,8 +111,8 @@ export function useChat({ groupId }: UseChatOptions) {
       }, 3000)
     })
 
-    // Presence sync — use global lobby status for each member
-    channel.on('presence', { event: 'sync' }, () => {
+    // Helper to read presence state and update members
+    const syncMembers = () => {
       const state = channel.presenceState<{
         user_id: string
         display_name: string
@@ -133,7 +133,12 @@ export function useChat({ groupId }: UseChatOptions) {
         }
       }
       setMembers(memberList)
-    })
+    }
+
+    // Presence sync — use global lobby status for each member
+    channel.on('presence', { event: 'sync' }, syncMembers)
+    channel.on('presence', { event: 'join' }, syncMembers)
+    channel.on('presence', { event: 'leave' }, syncMembers)
 
     channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
@@ -142,6 +147,8 @@ export function useChat({ groupId }: UseChatOptions) {
           display_name: profile.display_name,
           avatar_url: profile.avatar_url,
         })
+        // Ensure members state is up-to-date after own track
+        syncMembers()
       }
     })
 
