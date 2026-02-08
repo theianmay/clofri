@@ -18,6 +18,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ArrowDown,
+  Hand,
 } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
 import { linkifyText } from '../lib/linkify'
@@ -30,8 +31,20 @@ export function GroupChat() {
   const { groups, fetchGroups, leaveGroup, endGroupSession, kickMember, markRead } = useGroupStore()
   const group = groups.find((g) => g.id === groupId)
 
-  const { messages, typingUsers, sendMessage, sendTyping } = useChat({
+  const [nudgeShake, setNudgeShake] = useState(false)
+  const [nudgeCooldown, setNudgeCooldown] = useState(false)
+  const [nudgeMsg, setNudgeMsg] = useState<string | null>(null)
+
+  const handleNudgeReceived = useCallback((senderName: string) => {
+    setNudgeShake(true)
+    setNudgeMsg(`~ ${senderName} nudged you ~`)
+    setTimeout(() => setNudgeShake(false), 600)
+    setTimeout(() => setNudgeMsg(null), 4000)
+  }, [])
+
+  const { messages, typingUsers, sendMessage, sendTyping, sendNudge } = useChat({
     groupId: groupId || '',
+    onNudgeReceived: handleNudgeReceived,
   })
   const { getStatus } = usePresenceStore()
 
@@ -40,6 +53,15 @@ export function GroupChat() {
   const [copied, setCopied] = useState(false)
   const [showNewMsg, setShowNewMsg] = useState(false)
   const [confirmAction, setConfirmAction] = useState<{ type: 'end' | 'leave' | 'kick'; memberId?: string; memberName?: string } | null>(null)
+
+  const handleSendNudge = () => {
+    if (nudgeCooldown) return
+    sendNudge()
+    setNudgeMsg(`~ You sent a nudge ~`)
+    setTimeout(() => setNudgeMsg(null), 4000)
+    setNudgeCooldown(true)
+    setTimeout(() => setNudgeCooldown(false), 10000)
+  }
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -171,7 +193,7 @@ export function GroupChat() {
         </div>
 
         {/* Messages */}
-        <div className="relative flex-1 overflow-hidden">
+        <div className={`relative flex-1 overflow-hidden ${nudgeShake ? 'nudge-shake' : ''}`}>
           <div ref={scrollContainerRef} onScroll={handleScroll} className="h-full overflow-y-auto p-4 space-y-1">
             {messages.length === 0 && (
               <div className="text-center py-20">
@@ -218,6 +240,11 @@ export function GroupChat() {
                 </div>
               )
             })}
+            {nudgeMsg && (
+              <div className="text-center py-2">
+                <span className="text-zinc-500 text-xs italic">{nudgeMsg}</span>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
@@ -252,6 +279,15 @@ export function GroupChat() {
               maxLength={2000}
               className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-4 py-2.5 rounded-xl border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm"
             />
+            <button
+              type="button"
+              onClick={handleSendNudge}
+              disabled={nudgeCooldown}
+              title={nudgeCooldown ? 'Nudge on cooldown' : 'Send a nudge'}
+              className="p-2.5 text-zinc-400 hover:text-amber-400 rounded-xl border border-zinc-700 hover:border-amber-400/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <Hand className="w-4 h-4" />
+            </button>
             <button
               type="submit"
               disabled={!input.trim()}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../stores/authStore'
 import { usePresenceStore } from '../stores/presenceStore'
-import { playMessageSound, isSoundEnabled } from '../lib/sounds'
+import { playMessageSound, playNudgeSound, isSoundEnabled } from '../lib/sounds'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface DMMessage {
@@ -18,9 +18,10 @@ export interface DMMessage {
 interface UseDMChatOptions {
   sessionId: string
   friendId: string
+  onNudgeReceived?: (senderName: string) => void
 }
 
-export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
+export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOptions) {
   const profile = useAuthStore((s) => s.profile)
   const [messages, setMessages] = useState<DMMessage[]>([])
   const [typingUsers, setTypingUsers] = useState<string[]>([])
@@ -100,6 +101,16 @@ export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
       }, 3000)
     })
 
+    // Listen for nudge
+    channel.on('broadcast', { event: 'nudge' }, ({ payload }) => {
+      const { sender_id, display_name } = payload as { sender_id: string; display_name: string }
+      if (sender_id === profile.id) return
+
+      if (isSoundEnabled()) playNudgeSound()
+      if ('vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 100])
+      onNudgeReceived?.(display_name)
+    })
+
     channel.subscribe()
 
     channelRef.current = channel
@@ -177,5 +188,14 @@ export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
     }, 2000)
   }, [profile])
 
-  return { messages, typingUsers, sendMessage, sendTyping }
+  const sendNudge = useCallback(() => {
+    if (!profile || !channelRef.current) return
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'nudge',
+      payload: { sender_id: profile.id, display_name: profile.display_name },
+    })
+  }, [profile])
+
+  return { messages, typingUsers, sendMessage, sendTyping, sendNudge }
 }
