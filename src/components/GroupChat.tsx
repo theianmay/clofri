@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
 import { linkifyText } from '../lib/linkify'
+import { ConfirmDialog } from './ConfirmDialog'
 
 export function GroupChat() {
   const { groupId } = useParams<{ groupId: string }>()
@@ -36,6 +37,7 @@ export function GroupChat() {
   const [showMembers, setShowMembers] = useState(false)
   const [copied, setCopied] = useState(false)
   const [showNewMsg, setShowNewMsg] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<{ type: 'end' | 'leave' | 'kick'; memberId?: string; memberName?: string } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -106,15 +108,23 @@ export function GroupChat() {
   }
 
   const handleLeave = async () => {
-    if (!groupId || !confirm('Leave this group?')) return
+    if (!groupId) return
     await leaveGroup(groupId)
     navigate('/groups')
   }
 
   const handleEndSession = async () => {
-    if (!groupId || !confirm('End this session? All messages will be deleted and the group will close.')) return
+    if (!groupId) return
     await endGroupSession(groupId)
     navigate('/groups')
+  }
+
+  const handleConfirmAction = () => {
+    if (!confirmAction) return
+    if (confirmAction.type === 'end') handleEndSession()
+    else if (confirmAction.type === 'leave') handleLeave()
+    else if (confirmAction.type === 'kick' && confirmAction.memberId) kickMember(groupId!, confirmAction.memberId)
+    setConfirmAction(null)
   }
 
   const isCreator = group?.creator_id === profile?.id
@@ -221,13 +231,11 @@ export function GroupChat() {
         </div>
 
         {/* Ephemeral notice */}
-        {messages.length > 0 && (
-          <div className="px-4 py-1">
-            <p className="text-zinc-700 text-[10px] text-center">
-              Messages are ephemeral — only the last 50 are shown
-            </p>
-          </div>
-        )}
+        <div className="px-4 py-1">
+          <p className="text-zinc-600 text-xs text-center">
+            Messages are ephemeral — only the last 50 are shown
+          </p>
+        </div>
 
         {/* Input */}
         <form onSubmit={handleSend} className="p-4 border-t border-zinc-800">
@@ -335,7 +343,7 @@ export function GroupChat() {
                   </div>
                   {canKick && (
                     <button
-                      onClick={() => { if (confirm(`Remove ${member.profile?.display_name} from the group?`)) kickMember(groupId!, member.user_id) }}
+                      onClick={() => setConfirmAction({ type: 'kick', memberId: member.user_id, memberName: member.profile?.display_name || 'this member' })}
                       className="md:opacity-0 md:group-hover:opacity-100 p-1 text-zinc-600 hover:text-red-400 transition-all"
                       title="Remove member"
                     >
@@ -351,7 +359,7 @@ export function GroupChat() {
           <div className="p-3 border-t border-zinc-800 space-y-1">
             {isCreator ? (
               <button
-                onClick={handleEndSession}
+                onClick={() => setConfirmAction({ type: 'end' })}
                 className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm px-2 py-1.5 w-full rounded-lg hover:bg-zinc-800/50 transition-colors"
               >
                 <XCircle className="w-4 h-4" />
@@ -359,7 +367,7 @@ export function GroupChat() {
               </button>
             ) : (
               <button
-                onClick={handleLeave}
+                onClick={() => setConfirmAction({ type: 'leave' })}
                 className="flex items-center gap-2 text-zinc-400 hover:text-zinc-300 text-sm px-2 py-1.5 w-full rounded-lg hover:bg-zinc-800/50 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
@@ -401,7 +409,7 @@ export function GroupChat() {
                     </div>
                   </div>
                   {canKick && (
-                    <button onClick={() => { if (confirm(`Remove ${member.profile?.display_name} from the group?`)) kickMember(groupId!, member.user_id) }} className="md:opacity-0 md:group-hover:opacity-100 p-1 text-zinc-600 hover:text-red-400 transition-all" title="Remove member">
+                    <button onClick={() => setConfirmAction({ type: 'kick', memberId: member.user_id, memberName: member.profile?.display_name || 'this member' })} className="md:opacity-0 md:group-hover:opacity-100 p-1 text-zinc-600 hover:text-red-400 transition-all" title="Remove member">
                       <UserMinus className="w-3.5 h-3.5" />
                     </button>
                   )}
@@ -432,7 +440,7 @@ export function GroupChat() {
           <div className="p-3 border-t border-zinc-800 space-y-1">
             {isCreator ? (
               <button
-                onClick={handleEndSession}
+                onClick={() => setConfirmAction({ type: 'end' })}
                 className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm px-2 py-1.5 w-full rounded-lg hover:bg-zinc-800/50 transition-colors"
               >
                 <XCircle className="w-4 h-4" />
@@ -440,7 +448,7 @@ export function GroupChat() {
               </button>
             ) : (
               <button
-                onClick={handleLeave}
+                onClick={() => setConfirmAction({ type: 'leave' })}
                 className="flex items-center gap-2 text-zinc-400 hover:text-zinc-300 text-sm px-2 py-1.5 w-full rounded-lg hover:bg-zinc-800/50 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
@@ -450,6 +458,29 @@ export function GroupChat() {
           </div>
         </div>
       )}
+
+      {/* Confirm dialog */}
+      <ConfirmDialog
+        open={!!confirmAction}
+        title={
+          confirmAction?.type === 'end' ? 'End session?' :
+          confirmAction?.type === 'leave' ? 'Leave group?' :
+          `Remove ${confirmAction?.memberName}?`
+        }
+        description={
+          confirmAction?.type === 'end' ? 'All messages will be deleted and the group will close for everyone.' :
+          confirmAction?.type === 'leave' ? 'You can rejoin later with the invite code.' :
+          'They can rejoin with the invite code.'
+        }
+        confirmLabel={
+          confirmAction?.type === 'end' ? 'End Session' :
+          confirmAction?.type === 'leave' ? 'Leave' :
+          'Remove'
+        }
+        variant="danger"
+        onConfirm={handleConfirmAction}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   )
 }

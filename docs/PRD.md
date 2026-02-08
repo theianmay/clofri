@@ -1,4 +1,4 @@
-# Clofri — Product Requirements Document
+# clofri — Product Requirements Document
 
 > Presence-first, ephemeral chat for close friends. Messages fade. If you're not here, you miss it.
 
@@ -6,7 +6,7 @@
 
 ## 1. Product Vision
 
-Clofri is a lightweight, real-time chat app designed for small, trusted friend groups. Unlike traditional messengers where conversations accumulate forever, Clofri treats conversations as **ephemeral sessions** — they have a clear start and end, and messages are deleted when the session closes. The core philosophy is that presence matters: if you're not here, you miss it.
+clofri is a lightweight, real-time chat app designed for small, trusted friend groups. Unlike traditional messengers where conversations accumulate forever, clofri treats conversations as **ephemeral sessions** — they have a clear start and end, and messages are deleted when the session closes. The core philosophy is that presence matters: if you're not here, you miss it.
 
 ### Target Users
 - Small friend groups (2-10 people) who want a casual, low-pressure chat space

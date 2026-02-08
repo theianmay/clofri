@@ -5,6 +5,7 @@ import { useDMStore } from '../stores/dmStore'
 import { useDMChat } from '../hooks/useDMChat'
 import { usePresenceStore } from '../stores/presenceStore'
 import { ArrowLeft, Send, XCircle, ArrowDown } from 'lucide-react'
+import { ConfirmDialog } from './ConfirmDialog'
 import { AvatarIcon } from './AvatarIcon'
 import { linkifyText } from '../lib/linkify'
 
@@ -28,6 +29,7 @@ export function DMChat() {
   const [input, setInput] = useState('')
   const [sessionEnded, setSessionEnded] = useState(false)
   const [showNewMsg, setShowNewMsg] = useState(false)
+  const [showEndConfirm, setShowEndConfirm] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -89,7 +91,7 @@ export function DMChat() {
   }
 
   const handleEndChat = async () => {
-    if (!sessionId || !confirm('End this conversation? All messages will be deleted.')) return
+    if (!sessionId) return
     await endSession(sessionId)
     navigate('/messages')
   }
@@ -143,7 +145,7 @@ export function DMChat() {
           </p>
         </div>
         <button
-          onClick={handleEndChat}
+          onClick={() => setShowEndConfirm(true)}
           title="End conversation"
           className="p-2 text-zinc-500 hover:text-red-400 hover:bg-zinc-800 rounded-lg transition-colors"
         >
@@ -213,7 +215,7 @@ export function DMChat() {
 
       {/* Ephemeral notice */}
       <div className="px-4 py-1">
-        <p className="text-zinc-700 text-[10px] text-center">
+        <p className="text-zinc-600 text-xs text-center">
           Messages are ephemeral — they disappear when the conversation ends
         </p>
       </div>
@@ -239,6 +241,16 @@ export function DMChat() {
           </button>
         </div>
       </form>
+
+      <ConfirmDialog
+        open={showEndConfirm}
+        title="End conversation?"
+        description="All messages will be permanently deleted for both of you."
+        confirmLabel="End Chat"
+        variant="danger"
+        onConfirm={() => { setShowEndConfirm(false); handleEndChat() }}
+        onCancel={() => setShowEndConfirm(false)}
+      />
     </div>
   )
 }

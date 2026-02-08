@@ -22,6 +22,7 @@ import {
   Search,
 } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
+import { ConfirmDialog } from './ConfirmDialog'
 
 function FriendCard({
   friendship,
@@ -137,6 +138,8 @@ export function Friends() {
   const [tagMenuOpen, setTagMenuOpen] = useState<string | null>(null)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => new Set())
   const [searchQuery, setSearchQuery] = useState('')
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null)
+  const [confirmDeleteCat, setConfirmDeleteCat] = useState<string | null>(null)
 
   useEffect(() => {
     fetchFriends()
@@ -260,8 +263,8 @@ export function Friends() {
   }
 
   const handleRemove = async (id: string) => {
-    if (!confirm('Remove this friend?')) return
     await removeFriend(id)
+    setConfirmRemove(null)
   }
 
   const handleStartDM = async (friendId: string) => {
@@ -297,38 +300,40 @@ export function Friends() {
           </button>
         </div>
 
-        {showAdd && (
-          <form onSubmit={handleSendRequest} className="mt-4">
-            <p className="text-zinc-400 text-sm mb-2">
-              Enter your friend's code to send them a request.
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Friend code (e.g. A1B2C3)"
-                value={friendCode}
-                onChange={(e) => setFriendCode(e.target.value.toUpperCase())}
-                autoFocus
-                maxLength={10}
-                className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm font-mono tracking-wider"
-              />
-              <button
-                type="submit"
-                disabled={actionLoading || !friendCode.trim()}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 disabled:opacity-50 transition-colors flex items-center gap-2"
-              >
-                {actionLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-                Send
-              </button>
-            </div>
-            {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
-            {success && <p className="text-green-400 text-sm mt-2">{success}</p>}
-          </form>
-        )}
+        <div className={`expand-section ${showAdd ? 'open' : ''}`}>
+          <div>
+            <form onSubmit={handleSendRequest} className="mt-4">
+              <p className="text-zinc-400 text-sm mb-2">
+                Enter your friend's code to send them a request.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Friend code (e.g. A1B2C3)"
+                  value={friendCode}
+                  onChange={(e) => setFriendCode(e.target.value.toUpperCase())}
+                  autoFocus
+                  maxLength={10}
+                  className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm font-mono tracking-wider"
+                />
+                <button
+                  type="submit"
+                  disabled={actionLoading || !friendCode.trim()}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 disabled:opacity-50 transition-colors flex items-center gap-2"
+                >
+                  {actionLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                  Send
+                </button>
+              </div>
+              {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+              {success && <p className="text-green-400 text-sm mt-2">{success}</p>}
+            </form>
+          </div>
+        </div>
       </div>
 
       {/* Category management bar */}
@@ -342,11 +347,11 @@ export function Friends() {
                 {cat.name}
               </span>
               <button
-                onClick={() => removeCategory(cat.id)}
-                className="p-0.5 text-zinc-600 hover:text-red-400 transition-colors"
+                onClick={() => setConfirmDeleteCat(cat.id)}
+                className="p-1.5 text-zinc-600 hover:text-red-400 transition-colors"
                 title="Delete category"
               >
-                <X className="w-3 h-3" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           ))}
@@ -384,7 +389,7 @@ export function Friends() {
       )}
 
       {/* Search */}
-      {friends.length > 3 && (
+      {friends.length > 0 && (
         <div className="px-6 py-2 border-b border-zinc-800">
           <div className="relative">
             <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -522,7 +527,7 @@ export function Friends() {
                             categories={categories}
                             assignFriend={assignFriend}
                             handleStartDM={handleStartDM}
-                            handleRemove={handleRemove}
+                            handleRemove={(id) => setConfirmRemove(id)}
                           />
                         )
                       })}
@@ -567,7 +572,7 @@ export function Friends() {
                           categories={categories}
                           assignFriend={assignFriend}
                           handleStartDM={handleStartDM}
-                          handleRemove={handleRemove}
+                          handleRemove={(id) => setConfirmRemove(id)}
                         />
                       )
                     })}
@@ -584,11 +589,40 @@ export function Friends() {
                 <p className="text-zinc-600 text-sm mt-1">
                   Share your friend code or add someone by theirs
                 </p>
+                {!showAdd && (
+                  <button
+                    onClick={() => { setShowAdd(true); setError(null); setSuccess(null) }}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Add Friend
+                  </button>
+                )}
               </div>
             )}
           </>
         )}
       </div>
+
+      {/* Confirm dialogs */}
+      <ConfirmDialog
+        open={!!confirmRemove}
+        title="Remove friend?"
+        description="You'll need to send a new request to become friends again."
+        confirmLabel="Remove"
+        variant="danger"
+        onConfirm={() => confirmRemove && handleRemove(confirmRemove)}
+        onCancel={() => setConfirmRemove(null)}
+      />
+      <ConfirmDialog
+        open={!!confirmDeleteCat}
+        title="Delete category?"
+        description="Friends in this category will become uncategorized."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => { if (confirmDeleteCat) { removeCategory(confirmDeleteCat); setConfirmDeleteCat(null) } }}
+        onCancel={() => setConfirmDeleteCat(null)}
+      />
     </div>
   )
 }

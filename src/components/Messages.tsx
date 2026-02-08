@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDMStore } from '../stores/dmStore'
 import { usePresenceStore } from '../stores/presenceStore'
-import { ArrowRight, Loader2, MessageCircle } from 'lucide-react'
+import { ArrowRight, Loader2, MessageCircle, Users } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
 
 export function Messages() {
@@ -40,6 +40,13 @@ export function Messages() {
             <p className="text-zinc-600 text-sm mt-1">
               Start a chat from the Friends page
             </p>
+            <button
+              onClick={() => navigate('/')}
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
+            >
+              <Users className="w-4 h-4" />
+              Go to Friends
+            </button>
           </div>
         ) : (
           <div className="space-y-2">
