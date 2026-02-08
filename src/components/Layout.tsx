@@ -159,68 +159,69 @@ export function Layout() {
           </NavLink>
         </nav>
         <div className="p-3 border-t border-zinc-800">
-          <div className="flex items-center gap-3 px-2 mb-3">
-            <button onClick={() => setShowAvatarPicker(true)} className="relative shrink-0" title="Change avatar">
-              <AvatarIcon avatarUrl={profile?.avatar_url || null} displayName={profile?.display_name || ''} size="sm" />
-              <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColor} rounded-full border-2 border-zinc-900`} />
-            </button>
-            <div className="flex-1 min-w-0">
-              {editingName ? (
-                <div className="flex items-center gap-1">
-                  <input
-                    ref={nameInputRef}
-                    value={nameInput}
-                    onChange={(e) => setNameInput(e.target.value)}
-                    onBlur={saveName}
-                    onKeyDown={handleNameKeyDown}
-                    className="flex-1 min-w-0 bg-zinc-800 text-white text-sm font-medium px-1.5 py-0.5 rounded border border-zinc-600 focus:border-blue-500 focus:outline-none"
-                    maxLength={30}
-                  />
+          <div className="px-2 mb-3 space-y-2">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setShowAvatarPicker(true)} className="relative shrink-0" title="Change avatar">
+                <AvatarIcon avatarUrl={profile?.avatar_url || null} displayName={profile?.display_name || ''} size="sm" />
+                <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColor} rounded-full border-2 border-zinc-900`} />
+              </button>
+              <div className="flex-1 min-w-0">
+                {editingName ? (
+                  <div className="flex items-center gap-1">
+                    <input
+                      ref={nameInputRef}
+                      value={nameInput}
+                      onChange={(e) => setNameInput(e.target.value)}
+                      onBlur={saveName}
+                      onKeyDown={handleNameKeyDown}
+                      className="flex-1 min-w-0 bg-zinc-800 text-white text-sm font-medium px-1.5 py-0.5 rounded border border-zinc-600 focus:border-blue-500 focus:outline-none"
+                      maxLength={30}
+                    />
+                    <button
+                      onMouseDown={(e) => { e.preventDefault(); saveName() }}
+                      className="p-0.5 text-green-400 hover:text-green-300 transition-colors shrink-0"
+                      title="Save name"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onMouseDown={(e) => { e.preventDefault(); saveName() }}
-                    className="p-0.5 text-green-400 hover:text-green-300 transition-colors shrink-0"
-                    title="Save name"
+                    onClick={startEditingName}
+                    className="flex items-center gap-1 text-white text-sm font-medium truncate hover:text-zinc-300 transition-colors group/name"
                   >
-                    <Check className="w-3.5 h-3.5" />
+                    <span className="truncate">{profile?.display_name}</span>
+                    <Pencil className="w-3 h-3 text-zinc-600 group-hover/name:text-zinc-400 shrink-0" />
                   </button>
-                </div>
-              ) : (
-                <button
-                  onClick={startEditingName}
-                  className="flex items-center gap-1 text-white text-sm font-medium truncate hover:text-zinc-300 transition-colors group/name"
-                >
-                  <span className="truncate">{profile?.display_name}</span>
-                  <Pencil className="w-3 h-3 text-zinc-600 group-hover/name:text-zinc-400 shrink-0" />
-                </button>
-              )}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={copyFriendCode}
-                  className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-3 h-3 text-green-400" />
-                      <span className="text-green-400">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3 h-3" />
-                      <span>{profile?.friend_code}</span>
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={copyShareLink}
-                  className="flex items-center gap-1 text-xs text-zinc-500 hover:text-blue-400 transition-colors"
-                  title="Copy invite link + friend code"
-                >
-                  {shareCopied ? <Check className="w-3 h-3 text-green-400" /> : <Share2 className="w-3 h-3" />}
-                </button>
+                )}
               </div>
             </div>
           </div>
           <div className="space-y-0.5">
+            <button
+              onClick={copyFriendCode}
+              className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors w-full"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span className="text-green-400">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  <span>{profile?.friend_code}</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={copyShareLink}
+              className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors w-full"
+              title="Copy invite link + friend code"
+            >
+              {shareCopied ? <Check className="w-4 h-4 text-green-400" /> : <Share2 className="w-4 h-4" />}
+              {shareCopied ? 'Copied!' : 'Share invite'}
+            </button>
             <button
               onClick={() => { const next = !soundOn; setSoundOn(next); setSoundEnabled(next) }}
               className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors w-full"
@@ -337,75 +338,76 @@ export function Layout() {
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-3 px-2 mb-3">
-                <button
-                  onClick={() => setShowAvatarPicker(true)}
-                  className="relative group/avatar shrink-0"
-                  title="Change avatar"
-                >
-                  <AvatarIcon avatarUrl={profile?.avatar_url || null} displayName={profile?.display_name || ''} size="sm" />
-                  <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColor} rounded-full border-2 border-zinc-900`} />
-                  <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center">
-                    <Pencil className="w-3 h-3 text-white" />
-                  </div>
-                </button>
-                <div className="flex-1 min-w-0">
-                  {editingName ? (
-                    <div className="flex items-center gap-1">
-                      <input
-                        ref={nameInputRef}
-                        value={nameInput}
-                        onChange={(e) => setNameInput(e.target.value)}
-                        onBlur={saveName}
-                        onKeyDown={handleNameKeyDown}
-                        className="flex-1 min-w-0 bg-zinc-800 text-white text-sm font-medium px-1.5 py-0.5 rounded border border-zinc-600 focus:border-blue-500 focus:outline-none"
-                        maxLength={30}
-                      />
-                      <button
-                        onMouseDown={(e) => { e.preventDefault(); saveName() }}
-                        className="p-0.5 text-green-400 hover:text-green-300 transition-colors shrink-0"
-                        title="Save name"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
+              <div className="px-2 mb-3 space-y-2">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setShowAvatarPicker(true)}
+                    className="relative group/avatar shrink-0"
+                    title="Change avatar"
+                  >
+                    <AvatarIcon avatarUrl={profile?.avatar_url || null} displayName={profile?.display_name || ''} size="sm" />
+                    <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColor} rounded-full border-2 border-zinc-900`} />
+                    <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center">
+                      <Pencil className="w-3 h-3 text-white" />
                     </div>
-                  ) : (
-                    <button
-                      onClick={startEditingName}
-                      className="flex items-center gap-1 text-white text-sm font-medium truncate hover:text-zinc-300 transition-colors group/name"
-                    >
-                      <span className="truncate">{profile?.display_name}</span>
-                      <Pencil className="w-3 h-3 text-zinc-600 group-hover/name:text-zinc-400 shrink-0" />
-                    </button>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={copyFriendCode}
-                      className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="w-3 h-3 text-green-400" />
-                          <span className="text-green-400">Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          <span>{profile?.friend_code}</span>
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={copyShareLink}
-                      className="flex items-center gap-1 text-xs text-zinc-500 hover:text-blue-400 transition-colors"
-                      title="Copy invite link + friend code"
-                    >
-                      {shareCopied ? <Check className="w-3 h-3 text-green-400" /> : <Share2 className="w-3 h-3" />}
-                    </button>
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    {editingName ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          ref={nameInputRef}
+                          value={nameInput}
+                          onChange={(e) => setNameInput(e.target.value)}
+                          onBlur={saveName}
+                          onKeyDown={handleNameKeyDown}
+                          className="flex-1 min-w-0 bg-zinc-800 text-white text-sm font-medium px-1.5 py-0.5 rounded border border-zinc-600 focus:border-blue-500 focus:outline-none"
+                          maxLength={30}
+                        />
+                        <button
+                          onMouseDown={(e) => { e.preventDefault(); saveName() }}
+                          className="p-0.5 text-green-400 hover:text-green-300 transition-colors shrink-0"
+                          title="Save name"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={startEditingName}
+                        className="flex items-center gap-1 text-white text-sm font-medium truncate hover:text-zinc-300 transition-colors group/name"
+                      >
+                        <span className="truncate">{profile?.display_name}</span>
+                        <Pencil className="w-3 h-3 text-zinc-600 group-hover/name:text-zinc-400 shrink-0" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
               <div className="space-y-0.5">
+                <button
+                  onClick={copyFriendCode}
+                  className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors w-full"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4 text-green-400" />
+                      <span className="text-green-400">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>{profile?.friend_code}</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={copyShareLink}
+                  className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors w-full"
+                  title="Copy invite link + friend code"
+                >
+                  {shareCopied ? <Check className="w-4 h-4 text-green-400" /> : <Share2 className="w-4 h-4" />}
+                  {shareCopied ? 'Copied!' : 'Share invite'}
+                </button>
                 <button
                   onClick={() => { const next = !soundOn; setSoundOn(next); setSoundEnabled(next) }}
                   className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors w-full"

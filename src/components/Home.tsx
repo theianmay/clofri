@@ -185,7 +185,7 @@ export function Home() {
                         </span>
                       )}
                     </div>
-                    <p className="text-zinc-500 text-sm">
+                    <p className="text-zinc-500 text-xs">
                       {memberCount} member{memberCount !== 1 ? 's' : ''}
                     </p>
                   </div>
