@@ -8,6 +8,9 @@ const IDLE_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 const HEARTBEAT_INTERVAL_MS = 60 * 1000 // 60 seconds
 const STALE_THRESHOLD_MS = 6 * 60 * 1000 // 6 minutes (idle timeout + buffer)
 
+const STATUS_MSG_KEY = 'clofri-status-message'
+const AUTO_REPLY_KEY = 'clofri-auto-reply'
+
 export type UserStatus = 'active' | 'idle' | 'offline'
 
 export interface PresenceUser {
@@ -17,6 +20,7 @@ export interface PresenceUser {
   status: UserStatus
   last_active: string
   status_message: string | null
+  auto_reply: boolean
 }
 
 interface PresenceState {
@@ -43,8 +47,8 @@ function resolveStatus(user: PresenceUser): UserStatus {
 export const usePresenceStore = create<PresenceState>((set, get) => ({
   onlineUsers: new Map(),
   channel: null,
-  statusMessage: null,
-  autoReply: false,
+  statusMessage: localStorage.getItem(STATUS_MSG_KEY) || null,
+  autoReply: localStorage.getItem(AUTO_REPLY_KEY) === 'true',
 
   getStatus: (userId: string) => {
     const user = get().onlineUsers.get(userId)
@@ -60,6 +64,8 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
   setStatusMessage: (message: string | null) => {
     const trimmed = message?.trim() || null
     set({ statusMessage: trimmed })
+    if (trimmed) localStorage.setItem(STATUS_MSG_KEY, trimmed)
+    else localStorage.removeItem(STATUS_MSG_KEY)
     // Re-track with updated status message
     const { channel } = get()
     if (channel) {
@@ -78,6 +84,7 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
               status: p.status,
               last_active: new Date().toISOString(),
               status_message: trimmed,
+              auto_reply: get().autoReply,
             })
             break
           }
@@ -88,6 +95,30 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
 
   setAutoReply: (enabled: boolean) => {
     set({ autoReply: enabled })
+    localStorage.setItem(AUTO_REPLY_KEY, enabled ? 'true' : 'false')
+    // Re-track with updated auto_reply flag
+    const { channel, statusMessage } = get()
+    if (channel) {
+      const state = channel.presenceState<PresenceUser>()
+      for (const key in state) {
+        const presences = state[key]
+        if (presences && presences.length > 0) {
+          const p = presences[0]
+          if (key === p.user_id) {
+            channel.track({
+              user_id: p.user_id,
+              display_name: p.display_name,
+              avatar_url: p.avatar_url,
+              status: p.status,
+              last_active: new Date().toISOString(),
+              status_message: statusMessage,
+              auto_reply: enabled,
+            })
+            break
+          }
+        }
+      }
+    }
   },
 
   join: (profile) => {
@@ -113,6 +144,7 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
         status,
         last_active: new Date().toISOString(),
         status_message: get().statusMessage,
+        auto_reply: get().autoReply,
       })
     }
 
@@ -240,6 +272,7 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
             status: p.status,
             last_active: p.last_active,
             status_message: p.status_message || null,
+            auto_reply: !!p.auto_reply,
           })
         }
       }
@@ -265,6 +298,7 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
               status: 'active',
               last_active: new Date().toISOString(),
               status_message: get().statusMessage,
+              auto_reply: get().autoReply,
             })
           }
         }, HEARTBEAT_INTERVAL_MS)

@@ -168,17 +168,16 @@ export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOpt
 
       isTypingRef.current = false
 
-      // Auto-reply: if friend is idle/away and has auto-reply + status message, send once per session
+      // Auto-reply: if friend is idle/away, has auto-reply enabled, and has a status message
       if (!autoRepliedRef.current) {
         const presenceState = usePresenceStore.getState()
         const friendStatus = presenceState.getStatus(friendId)
         const friendUser = presenceState.onlineUsers.get(friendId)
         if (
           (friendStatus === 'idle') &&
+          friendUser?.auto_reply &&
           friendUser?.status_message
         ) {
-          // Check if the friend has auto-reply enabled by looking at their presence
-          // We broadcast the auto-reply as a local-only system message
           autoRepliedRef.current = true
           const autoReplyMsg: DMMessage = {
             id: `auto-reply-${crypto.randomUUID()}`,
