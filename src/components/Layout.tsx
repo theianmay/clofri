@@ -34,6 +34,18 @@ export function Layout() {
     setSidebarOpen(false)
   }, [location.pathname])
 
+  // Dynamic page title
+  useEffect(() => {
+    const path = location.pathname
+    let page = 'clofri'
+    if (path === '/') page = 'clofri · Friends'
+    else if (path === '/messages') page = 'clofri · Messages'
+    else if (path.startsWith('/dm/')) page = 'clofri · DM'
+    else if (path === '/groups') page = 'clofri · Groups'
+    else if (path.startsWith('/group/')) page = 'clofri · Group Chat'
+    document.title = page
+  }, [location.pathname])
+
   useEffect(() => {
     if (editingName && nameInputRef.current) {
       nameInputRef.current.focus()

@@ -19,6 +19,7 @@ import {
   MessageCircle,
   ChevronDown,
   ChevronRight,
+  Search,
 } from 'lucide-react'
 import { AvatarIcon } from './AvatarIcon'
 
@@ -135,6 +136,7 @@ export function Friends() {
   const [newCategoryName, setNewCategoryName] = useState('')
   const [tagMenuOpen, setTagMenuOpen] = useState<string | null>(null)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => new Set())
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     fetchFriends()
@@ -157,10 +159,15 @@ export function Friends() {
 
   // Group friends by category, sorted by online status within each group
   const { categoryGroups, uncategorized, totalActive, totalIdle } = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim()
+    const filtered = query
+      ? friends.filter((f) => f.friend.display_name.toLowerCase().includes(query))
+      : friends
+
     const grouped = new Map<string, typeof friends>()
     const uncat: typeof friends = []
 
-    for (const f of friends) {
+    for (const f of filtered) {
       const catId = assignments[f.friendship.id]
       if (catId && categories.some((c) => c.id === catId)) {
         if (!grouped.has(catId)) grouped.set(catId, [])
@@ -182,7 +189,7 @@ export function Friends() {
       .filter((g) => g.friends.length > 0)
 
     let active = 0, idle = 0
-    for (const f of friends) {
+    for (const f of filtered) {
       const s = getStatus(f.friend.id)
       if (s === 'active') active++
       else if (s === 'idle') idle++
@@ -194,7 +201,7 @@ export function Friends() {
       totalActive: active,
       totalIdle: idle,
     }
-  }, [friends, assignments, categories, onlineUsers])
+  }, [friends, assignments, categories, onlineUsers, searchQuery])
 
   const handleAddCategory = () => {
     const name = newCategoryName.trim()
@@ -349,6 +356,22 @@ export function Friends() {
               New
             </button>
           )}
+        </div>
+      )}
+
+      {/* Search */}
+      {friends.length > 3 && (
+        <div className="px-6 py-2 border-b border-zinc-800">
+          <div className="relative">
+            <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search friends..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-zinc-800/50 text-white placeholder-zinc-500 pl-9 pr-3 py-2 rounded-lg border border-zinc-700/50 focus:border-blue-500 focus:outline-none text-sm"
+            />
+          </div>
         </div>
       )}
 

@@ -73,8 +73,8 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | FRI-8 | As a user, I can filter my friends list by category | ✅ Done | Category filter dropdown on Friends page |
 | FRI-9 | As a user, I receive a success message after sending a friend request | ✅ Done | Green success toast |
 | FRI-10 | As a user, the friend request UI resets after a successful send | ✅ Done | Input clears, panel can close |
-| FRI-11 | As a user, I should be notified in real-time when I receive a friend request | 🔲 Future | Currently requires page refresh or poll to see new requests |
-| FRI-12 | As a user, I should be able to search/filter my friends list by name | 🔲 Future | No search input currently |
+| FRI-11 | As a user, I should be notified in real-time when I receive a friend request | ✅ Done | `friend_request` lobby broadcast → sound + fetchFriends |
+| FRI-12 | As a user, I should be able to search/filter my friends list by name | ✅ Done | Search input (shown when >3 friends) filters across all categories |
 
 ---
 
@@ -131,7 +131,7 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | GRP-5 | As a user, I can see group member count and unread indicators on group cards | ✅ Done | Member count badge + blue unread dot |
 | GRP-6 | As a user, I can copy a group's invite code to share with friends | ✅ Done | Copy button in GroupChat sidebar |
 | GRP-7 | As a user, I can leave a group I'm a member of | ✅ Done | Leave button for non-creators |
-| GRP-8 | As a group creator, I can delete the group entirely | ✅ Done | Delete button removes group + members + messages |
+| GRP-8 | As a group creator, I can delete the group entirely | ✅ Done | Consolidated into End Session (no separate delete) |
 | GRP-9 | As a group creator, I can kick a member from the group | ✅ Done | Kick button on member list hover |
 | GRP-10 | As a group creator, I can end the group session (delete messages, deactivate group) | ✅ Done | End Session button → `endGroupSession` |
 | GRP-11 | As a user, I should be notified and redirected when a group session I'm in is ended by the creator | ✅ Done | `group_ended` lobby broadcast → sound + fetchGroups + auto-redirect |
@@ -191,7 +191,7 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | NOTIF-7 | As a user, unread indicators clear when I open the conversation | ✅ Done | `markRead` called on mount |
 | NOTIF-8 | As a user, I hear a sound when the other person ends a DM session | ✅ Done | `dm_ended` lobby broadcast |
 | NOTIF-9 | As a user, I should receive push notifications when the app is in the background | 🔲 Future | Requires service worker + web push |
-| NOTIF-10 | As a user, I should hear a sound when a group message arrives while I'm on another page | 🔲 Future | Currently only works for DMs via lobby; groups only while in the chat |
+| NOTIF-10 | As a user, I should hear a sound when a group message arrives while I'm on another page | ✅ Done | `new_group_msg` lobby broadcast → sound + unread if not viewing group |
 
 ---
 
@@ -208,7 +208,7 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | NAV-5 | As a user, I am redirected to the login page if my session expires | ✅ Done | Auth guard in App.tsx |
 | NAV-6 | As a user, the Friends page is my landing page when I open the app | ✅ Done | Route `/` maps to Friends |
 | NAV-7 | As a user, I see a proper branded favicon in the browser tab | ✅ Done | Blue chat bubble SVG favicon at `public/favicon.svg` |
-| NAV-8 | As a user, the page title in the browser tab reflects the current page | 🔲 Future | e.g. "clofri · Friends", "clofri · Messages" |
+| NAV-8 | As a user, the page title in the browser tab reflects the current page | ✅ Done | Dynamic title: "clofri · Friends", "clofri · Messages", etc. |
 
 ---
 
@@ -239,14 +239,16 @@ Clofri is a lightweight, real-time chat app designed for small, trusted friend g
 ## 4. Known Gaps & Future Work
 
 ### Short-term (polish before deploy)
-- **CAT-7/8**: Collapsible category sections on Friends page with online/offline status within each
-- **NAV-7**: Branded favicon
-- **AUTH-8**: Customized magic link email template
-- **GRP-11**: Group session ended notification — broadcast `group_ended` on lobby so members are notified/redirected
-- **DM-13**: "Conversation ended" toast — brief visual feedback before redirect
-- **NOTIF-10**: Global group message notifications — sound + unread when not in the group chat
-- **FRI-11**: Real-time friend request notifications
-- **AUTH-6**: Google OAuth configuration
+- ~~**CAT-7/8**: Collapsible category sections~~ ✅
+- ~~**NAV-7**: Branded favicon~~ ✅
+- ~~**GRP-11**: Group session ended notification~~ ✅
+- ~~**DM-13**: Conversation ended toast~~ ✅
+- ~~**NOTIF-10**: Global group message notifications~~ ✅
+- ~~**FRI-11**: Real-time friend request notifications~~ ✅
+- ~~**FRI-12**: Search/filter friends by name~~ ✅
+- ~~**NAV-8**: Dynamic page titles~~ ✅
+- **AUTH-8**: Customized magic link email template (Supabase dashboard config)
+- **AUTH-6**: Google OAuth configuration (Google Cloud Console setup)
 
 ### Medium-term (post-validation)
 - **Persistent groups (paid)** — `is_persistent` flag for premium groups that keep messages

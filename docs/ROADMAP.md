@@ -22,8 +22,12 @@
 - [x] **Unread indicator** — Blue dot on group/DM cards when there are new messages since last visit (client-side, localStorage timestamps).
 - [x] **Sound/vibration** — Subtle two-tone notification sound when a message arrives from others. Toggle in sidebar (Volume icon). Works globally via lobby channel for DMs.
 - [x] **Group session notifications** — Broadcast `group_ended` on lobby channel when creator ends a group session, so members are notified and auto-redirected (similar to DM ended flow).
-- [ ] **Group ephemeral UX polish** — Non-creators should also be able to leave/end their participation; clarify "End Session" vs "Delete Group" vs "Leave Group" actions.
+- [x] **Group ephemeral UX polish** — Consolidated End Session + Delete Group into single "End Session" for creators. Members see "Leave Group".
 - [x] **DM session ended toast/banner** — Shows "Conversation ended" screen for 2s before redirecting to /messages.
+- [x] **Real-time friend request notifications** — `friend_request` lobby broadcast so recipients see new requests without refresh.
+- [x] **Search friends by name** — Search input on Friends page (shown when >3 friends), filters across all categories.
+- [x] **Dynamic page titles** — Browser tab shows "clofri · Friends", "clofri · Messages", etc.
+- [x] **Global group message notifications** — `new_group_msg` lobby broadcast so members get sound + unread indicator when not in the group chat.
 - [ ] **UI / Layout redesign** - come up with the style, colors, and vibe. modern but also vintage, like an ode to the AIM/MSN Messengers of the world that are gone
 
 ---

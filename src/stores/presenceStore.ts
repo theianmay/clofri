@@ -129,6 +129,39 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
       }
     })
 
+    // --- Friend request listener ---
+    channel.on('broadcast', { event: 'friend_request' }, ({ payload }) => {
+      if (payload.recipient_id === profile.id) {
+        if (isSoundEnabled()) {
+          playMessageSound()
+        }
+        // Re-fetch friends to show the new pending request
+        import('./friendStore').then(({ useFriendStore }) => {
+          useFriendStore.getState().fetchFriends()
+        })
+      }
+    })
+
+    // --- Group message notification listener ---
+    channel.on('broadcast', { event: 'new_group_msg' }, ({ payload }) => {
+      if (payload.member_ids?.includes(profile.id)) {
+        const isViewingGroup = window.location.pathname === `/group/${payload.group_id}`
+        if (!isViewingGroup) {
+          // Mark as unread
+          import('./groupStore').then(({ useGroupStore }) => {
+            const unread = new Set(useGroupStore.getState().unreadGroups)
+            unread.add(payload.group_id)
+            useGroupStore.setState({ unreadGroups: unread })
+          })
+
+          // Play sound
+          if (isSoundEnabled()) {
+            playMessageSound()
+          }
+        }
+      }
+    })
+
     // --- Group ended listener ---
     channel.on('broadcast', { event: 'group_ended' }, ({ payload }) => {
       if (payload.member_ids?.includes(profile.id)) {

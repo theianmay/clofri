@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../stores/authStore'
 import { usePresenceStore, type UserStatus } from '../stores/presenceStore'
+import { useGroupStore } from '../stores/groupStore'
 import { playMessageSound, isSoundEnabled } from '../lib/sounds'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -174,6 +175,22 @@ export function useChat({ groupId }: UseChatOptions) {
         event: 'message',
         payload: msg,
       })
+
+      // Notify other group members via lobby channel
+      const lobbyChannel = usePresenceStore.getState().channel
+      if (lobbyChannel) {
+        const group = useGroupStore.getState().groups.find((g) => g.id === groupId)
+        const memberIds = group?.members
+          .map((m) => m.user_id)
+          .filter((id) => id !== profile.id) || []
+        if (memberIds.length > 0) {
+          lobbyChannel.send({
+            type: 'broadcast',
+            event: 'new_group_msg',
+            payload: { group_id: groupId, sender_id: profile.id, member_ids: memberIds },
+          })
+        }
+      }
 
       // Persist to DB
       const { error: insertErr } = await supabase.from('messages').insert({

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Profile, Friendship } from '../types/database'
 import { supabase } from '../lib/supabase'
+import { usePresenceStore } from './presenceStore'
 
 export interface FriendEntry {
   friendship: Friendship
@@ -117,6 +118,16 @@ export const useFriendStore = create<FriendState>((set, get) => ({
         .insert({ requester_id: user.id, addressee_id: (target as any).id } as any)
 
       if (error) { console.error('sendRequest insert error:', error); return { error: error.message } }
+
+      // Notify recipient via lobby broadcast
+      const lobbyChannel = usePresenceStore.getState().channel
+      if (lobbyChannel) {
+        lobbyChannel.send({
+          type: 'broadcast',
+          event: 'friend_request',
+          payload: { recipient_id: (target as any).id },
+        })
+      }
 
       await get().fetchFriends()
       return { error: null }
