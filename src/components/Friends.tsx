@@ -224,6 +224,15 @@ export function Friends() {
     }
   }, [friends, assignments, categories, onlineUsers, searchQuery])
 
+  const isSearching = searchQuery.trim().length > 0
+  const searchLower = searchQuery.toLowerCase().trim()
+  const filteredReceived = isSearching
+    ? pendingReceived.filter((f) => f.friend.display_name.toLowerCase().includes(searchLower))
+    : pendingReceived
+  const filteredSent = isSearching
+    ? pendingSent.filter((f) => f.friend.display_name.toLowerCase().includes(searchLower))
+    : pendingSent
+
   const handleAddCategory = () => {
     const name = newCategoryName.trim()
     if (!name) return
@@ -412,13 +421,13 @@ export function Friends() {
         ) : (
           <>
             {/* Pending received */}
-            {pendingReceived.length > 0 && (
+            {filteredReceived.length > 0 && (
               <section>
                 <h3 className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2 px-1">
                   Pending Requests
                 </h3>
                 <div className="space-y-1">
-                  {pendingReceived.map(({ friendship, friend }) => (
+                  {filteredReceived.map(({ friendship, friend }) => (
                     <div
                       key={friendship.id}
                       className="flex items-center gap-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800"
@@ -451,13 +460,13 @@ export function Friends() {
             )}
 
             {/* Pending sent */}
-            {pendingSent.length > 0 && (
+            {filteredSent.length > 0 && (
               <section>
                 <h3 className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2 px-1">
                   Sent Requests
                 </h3>
                 <div className="space-y-1">
-                  {pendingSent.map(({ friendship, friend }) => (
+                  {filteredSent.map(({ friendship, friend }) => (
                     <div
                       key={friendship.id}
                       className="flex items-center gap-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800"
@@ -486,7 +495,7 @@ export function Friends() {
 
             {/* Category sections */}
             {categoryGroups.map(({ category, friends: catFriends }) => {
-              const isCollapsed = collapsedSections.has(category.id)
+              const isCollapsed = !isSearching && collapsedSections.has(category.id)
               const activeCount = catFriends.filter((f) => getStatus(f.friend.id) === 'active').length
               const idleCount = catFriends.filter((f) => getStatus(f.friend.id) === 'idle').length
               return (
@@ -544,7 +553,7 @@ export function Friends() {
                   onClick={() => toggleSection('__uncategorized')}
                   className="w-full flex items-center gap-2 mb-2 px-1"
                 >
-                  {collapsedSections.has('__uncategorized') ? (
+                  {!isSearching && collapsedSections.has('__uncategorized') ? (
                     <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
                   ) : (
                     <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
@@ -555,7 +564,7 @@ export function Friends() {
                   </span>
                   <span className="text-zinc-600 text-xs">{uncategorized.length}</span>
                 </button>
-                {!collapsedSections.has('__uncategorized') && (
+                {(isSearching || !collapsedSections.has('__uncategorized')) && (
                   <div className="space-y-1">
                     {uncategorized.map(({ friendship, friend }) => {
                       const status = getStatus(friend.id)
