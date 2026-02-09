@@ -35,35 +35,39 @@ export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOpt
 
     // Fetch recent DMs for this session from DB
     const fetchHistory = async () => {
-      const { data, error } = await supabase
-        .from('direct_messages')
-        .select('*')
-        .eq('session_id', sessionId)
-        .order('created_at', { ascending: true })
-        .limit(50)
-
-      if (error) console.error('DM fetchHistory error:', error)
-
-      if (data) {
-        const userIds = [...new Set(data.map((m: any) => m.sender_id))]
-        const { data: profiles } = await supabase
-          .from('profiles')
+      try {
+        const { data, error } = await supabase
+          .from('direct_messages')
           .select('*')
-          .in('id', userIds)
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: true })
+          .limit(50)
 
-        const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+        if (error) console.error('DM fetchHistory error:', error)
 
-        setMessages(
-          data.map((m: any) => ({
-            id: m.id,
-            sender_id: m.sender_id,
-            receiver_id: m.receiver_id,
-            display_name: profileMap.get(m.sender_id)?.display_name || 'Unknown',
-            avatar_url: profileMap.get(m.sender_id)?.avatar_url || null,
-            text: m.text,
-            created_at: m.created_at,
-          }))
-        )
+        if (data) {
+          const userIds = [...new Set(data.map((m: any) => m.sender_id))]
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('*')
+            .in('id', userIds)
+
+          const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+
+          setMessages(
+            data.map((m: any) => ({
+              id: m.id,
+              sender_id: m.sender_id,
+              receiver_id: m.receiver_id,
+              display_name: profileMap.get(m.sender_id)?.display_name || 'Unknown',
+              avatar_url: profileMap.get(m.sender_id)?.avatar_url || null,
+              text: m.text,
+              created_at: m.created_at,
+            }))
+          )
+        }
+      } catch (err) {
+        console.error('DM fetchHistory unexpected error:', err)
       }
     }
 

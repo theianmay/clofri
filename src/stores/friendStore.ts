@@ -154,29 +154,44 @@ export const useFriendStore = create<FriendState>((set, get) => ({
   },
 
   acceptRequest: async (friendshipId: string) => {
-    await supabase
-      .from('friendships')
-      .update({ status: 'accepted' } as any)
-      .eq('id', friendshipId)
+    try {
+      await supabase
+        .from('friendships')
+        .update({ status: 'accepted' } as any)
+        .eq('id', friendshipId)
 
-    await get().fetchFriends()
+      await get().fetchFriends()
+    } catch (err) {
+      console.error('acceptRequest error:', err)
+      await get().fetchFriends()
+    }
   },
 
   rejectRequest: async (friendshipId: string) => {
-    await supabase
-      .from('friendships')
-      .delete()
-      .eq('id', friendshipId)
+    try {
+      await supabase
+        .from('friendships')
+        .delete()
+        .eq('id', friendshipId)
 
-    await get().fetchFriends()
+      await get().fetchFriends()
+    } catch (err) {
+      console.error('rejectRequest error:', err)
+      await get().fetchFriends()
+    }
   },
 
   removeFriend: async (friendshipId: string) => {
-    await supabase
-      .from('friendships')
-      .delete()
-      .eq('id', friendshipId)
+    try {
+      await supabase
+        .from('friendships')
+        .delete()
+        .eq('id', friendshipId)
 
-    await get().fetchFriends()
+      await get().fetchFriends()
+    } catch (err) {
+      console.error('removeFriend error:', err)
+      await get().fetchFriends()
+    }
   },
 }))

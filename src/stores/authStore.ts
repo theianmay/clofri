@@ -37,11 +37,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const profile = await fetchOrCreateProfile(session.user)
-        set({ user: session.user, session, profile })
-      } else {
-        set({ user: null, session: null, profile: null })
+      try {
+        if (session?.user) {
+          const profile = await fetchOrCreateProfile(session.user)
+          set({ user: session.user, session, profile })
+        } else {
+          set({ user: null, session: null, profile: null })
+        }
+      } catch (err) {
+        console.error('Auth state change handler failed:', err)
       }
     })
   },
