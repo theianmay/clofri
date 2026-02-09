@@ -67,7 +67,7 @@ function FriendCard({
           displayName={friend.display_name}
           className={isOffline ? 'opacity-50' : undefined}
         />
-        <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 ${statusColor} rounded-full border-2 border-zinc-900`} />
+        <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 ${statusColor} rounded-full border-2 border-zinc-900`} aria-label={statusText} />
       </div>
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-medium truncate ${isOffline ? 'text-zinc-400' : 'text-white'}`}>

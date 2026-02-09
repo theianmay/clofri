@@ -151,9 +151,12 @@ export function DMChat() {
             displayName={friend?.display_name || 'Unknown'}
             size="sm"
           />
-          <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${
-            status === 'active' ? 'bg-green-500' : status === 'idle' ? 'bg-amber-400' : 'bg-zinc-600'
-          } rounded-full border-2 border-zinc-900`} />
+          <span
+            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${
+              status === 'active' ? 'bg-green-500' : status === 'idle' ? 'bg-amber-400' : 'bg-zinc-600'
+            } rounded-full border-2 border-zinc-900`}
+            aria-label={statusText}
+          />
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="text-white font-semibold truncate text-sm">
@@ -205,9 +208,9 @@ export function DMChat() {
                 )}
                 <div className={`max-w-[70%] ${isOwn ? 'text-right' : ''}`}>
                   {!isGrouped && (
-                    <p className={`text-xs mb-1 font-mono-nostalgic ${isOwn ? 'text-blue-400/60' : 'text-zinc-500'}`}>
+                    <p className={`text-sm font-medium mb-1 ${isOwn ? 'text-blue-400/60' : 'text-zinc-500'}`}>
                       {msg.display_name}
-                      <span className="text-zinc-700 ml-2">
+                      <span className="text-[10px] font-normal font-mono-nostalgic text-zinc-700 ml-2">
                         {new Date(msg.created_at).toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',

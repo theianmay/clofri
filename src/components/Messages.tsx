@@ -70,7 +70,10 @@ export function Messages() {
                       avatarUrl={session.friend.avatar_url}
                       displayName={session.friend.display_name}
                     />
-                    <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 ${statusColor} rounded-full border-2 border-zinc-900`} />
+                    <span
+                      className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 ${statusColor} rounded-full border-2 border-zinc-900`}
+                      aria-label={status === 'active' ? 'Online' : status === 'idle' ? 'Idle' : 'Offline'}
+                    />
                     {hasUnread && (
                       <span className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-zinc-900" />
                     )}
