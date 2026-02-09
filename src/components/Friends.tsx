@@ -55,7 +55,7 @@ function FriendCard({
 
   return (
     <div
-      className={`flex items-center gap-3 p-3 rounded-xl border group ${
+      className={`flex items-start gap-3 p-3 rounded-xl border group ${
         isOffline
           ? 'bg-zinc-900/50 border-zinc-800/50'
           : 'bg-zinc-900 border-zinc-800'
@@ -80,39 +80,41 @@ function FriendCard({
           </p>
         )}
       </div>
-      <div className="relative" data-tag-menu>
+      <div className="flex items-center gap-0.5 pt-0.5">
         <button
-          onClick={() => setTagMenuOpen(tagMenuOpen === friendship.id ? null : friendship.id)}
-          className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-zinc-300 rounded-lg transition-all"
-          title="Set category"
+          onClick={() => handleStartDM(friend.id)}
+          className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-blue-400 rounded-lg transition-all"
+          title="Message"
         >
-          <Tag className="w-3.5 h-3.5" />
+          <MessageCircle className="w-4 h-4" />
         </button>
-        {tagMenuOpen === friendship.id && (
-          <div className="absolute right-0 top-full mt-1 z-20 bg-zinc-800 border border-zinc-700 rounded-lg py-1 min-w-[120px] shadow-xl">
-            <button onClick={() => { assignFriend(friendship.id, null); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-700 text-left">None</button>
-            {categories.map((c) => (
-              <button key={c.id} onClick={() => { assignFriend(friendship.id, c.id); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-white hover:bg-zinc-700 text-left flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${c.color}`} /> {c.name}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="relative" data-tag-menu>
+          <button
+            onClick={() => setTagMenuOpen(tagMenuOpen === friendship.id ? null : friendship.id)}
+            className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-zinc-300 rounded-lg transition-all"
+            title="Set category"
+          >
+            <Tag className="w-3.5 h-3.5" />
+          </button>
+          {tagMenuOpen === friendship.id && (
+            <div className="absolute right-0 top-full mt-1 z-20 bg-zinc-800 border border-zinc-700 rounded-lg py-1 min-w-[120px] shadow-xl">
+              <button onClick={() => { assignFriend(friendship.id, null); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-700 text-left">None</button>
+              {categories.map((c) => (
+                <button key={c.id} onClick={() => { assignFriend(friendship.id, c.id); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-white hover:bg-zinc-700 text-left flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${c.color}`} /> {c.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={() => handleRemove(friendship.id)}
+          className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
+          title="Remove friend"
+        >
+          <UserMinus className="w-4 h-4" />
+        </button>
       </div>
-      <button
-        onClick={() => handleStartDM(friend.id)}
-        className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-blue-400 rounded-lg transition-all"
-        title="Message"
-      >
-        <MessageCircle className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => handleRemove(friendship.id)}
-        className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
-        title="Remove friend"
-      >
-        <UserMinus className="w-4 h-4" />
-      </button>
     </div>
   )
 }
