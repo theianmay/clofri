@@ -395,23 +395,20 @@ Client-side only — check `msg.text.startsWith('/me ')` in the message renderin
 
 ---
 
-## 3. Implementation Priority
+## 3. Implementation Status
 
-| # | Feature | Nostalgia Impact | Effort | Dependencies | Priority |
-|---|---------|-----------------|--------|--------------|----------|
-| 1 | **Nudge** | Very High | ~2-3h | None | **P0 — Do first** |
-| 2 | **Away Messages** | Very High | ~2-3h | None | **P0 — Do first** |
-| 3 | **Sign-on/off Sounds** | High | ~1-2h | Friend store cross-ref | **P1 — Do second** |
-| 4 | **/me Actions** | Medium | ~30m | None | **P1 — Quick win** |
-| 5 | **Custom Status** | High | ~0h | Covered by #2 | **Free with #2** |
+| # | Feature | Nostalgia Impact | Effort | Status |
+|---|---------|-----------------|--------|--------|
+| 1 | **Nudge** | Very High | ~2-3h | ✅ Shipped |
+| 2 | **Away Messages + Custom Status** | Very High | ~2-3h | ✅ Shipped |
+| 3 | **Sign-on/off Sounds** | High | ~1-2h | 🔮 Future |
+| 4 | **/me Actions** | Medium | ~30m | 🔮 Future |
 
-### Recommended build order
-1. **Nudge** — Highest "wow" factor, purely additive, no data model changes
-2. **Away Messages + Custom Status** — Extends existing presence system
-3. **/me Actions** — Trivial client-side change, delightful touch
-4. **Sign-on/off Sounds** — Polishes the presence experience
-
-**Total estimated effort: ~6-8 hours**
+### What shipped
+- **Nudge** — Shake animation, buzzy sound, 10s cooldown, system messages, mobile vibration (DM + Group)
+- **Away Messages** — Ephemeral status messages via presence payload, localStorage persistence, auto-reply (opt-in, once per session), display in Friends/DM/Messages
+- **Custom Status** — Free with Away Messages (status message visible when active or idle)
+- **Offline send protection** — Input disabled when friend is offline, stale session auto-cleanup (client + server cron)
 
 ---
 
@@ -427,22 +424,24 @@ These features should feel like nostalgic callbacks, not exact replicas. Key pri
 
 ---
 
-## 5. Future Nostalgia Ideas (not scoped)
+## 5. Future Nostalgia Ideas
 
-These are ideas that could further deepen the nostalgic feel but require more significant effort:
+These ideas are documented for future revisiting. Implementation details for Sign-on/off Sounds and /me Actions are already spec'd in sections 2.3 and 2.5 above.
 
-| Idea | Origin | Notes |
-|---|---|---|
-| **Chat window color themes** | MSN Messenger | Per-user color preferences for chat bubbles |
-| **Saved away message presets** | AIM | Library of reusable status messages |
-| **Profile "About Me" page** | AIM Profiles | HTML-formatted (or markdown) profile page |
-| **Idle animation** | MSN Messenger | Subtle avatar animation when idle (e.g., ZZZ overlay) |
-| **"Warning" system** | AIM | Community moderation tool — warn spammers, throttle their sends |
-| **Buddy pounce / alerts** | Trillian/Pidgin | Get notified when a specific friend comes online |
-| **Channel ops / moderation** | IRC | Mute, slow mode, channel bans for groups |
-| **Day/night greeting** | MSN Plus! | "Good morning, [name]!" based on time of day |
-| **Sound packs** | MSN Plus! / Trillian | Swap notification sounds between themed packs |
-| **Chat log export** | IRC/mIRC | Download conversation before session ends |
+| Idea | Origin | Effort | Notes |
+|---|---|---|---|
+| **Sign-on/off Sounds** | AIM | ~1-2h | Rising chime on friend online, falling tone on offline. Needs presence sync diffing + friend list cross-ref. See §2.3 |
+| **/me Actions** | IRC | ~30m | `/me dances` → `* alice dances *`. Pure client-side render change in DMChat + GroupChat. See §2.5 |
+| **Chat window color themes** | MSN Messenger | Medium | Per-user color preferences for chat bubbles |
+| **Saved away message presets** | AIM | Low | Library of reusable status messages (localStorage) |
+| **Profile "About Me" page** | AIM Profiles | Medium | HTML-formatted (or markdown) profile page |
+| **Idle animation** | MSN Messenger | Low | Subtle avatar animation when idle (e.g., ZZZ overlay) |
+| **"Warning" system** | AIM | High | Community moderation tool — warn spammers, throttle their sends |
+| **Buddy pounce / alerts** | Trillian/Pidgin | Medium | Get notified when a specific friend comes online |
+| **Channel ops / moderation** | IRC | High | Mute, slow mode, channel bans for groups |
+| **Day/night greeting** | MSN Plus! | Low | "Good morning, [name]!" based on time of day |
+| **Sound packs** | MSN Plus! / Trillian | Medium | Swap notification sounds between themed packs |
+| **Chat log export** | IRC/mIRC | Medium | Download conversation before session ends |
 
 ---
 
