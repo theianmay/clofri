@@ -41,34 +41,38 @@ export function useChat({ groupId, onNudgeReceived }: UseChatOptions) {
 
     // Fetch recent messages from DB
     const fetchHistory = async () => {
-      const { data, error: histErr } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('group_id', groupId)
-        .order('created_at', { ascending: true })
-        .limit(50)
-
-      if (histErr) console.error('fetchHistory error:', histErr)
-      if (data) {
-        // We need profiles for display names
-        const userIds = [...new Set(data.map((m: any) => m.user_id))]
-        const { data: profiles } = await supabase
-          .from('profiles')
+      try {
+        const { data, error: histErr } = await supabase
+          .from('messages')
           .select('*')
-          .in('id', userIds)
+          .eq('group_id', groupId)
+          .order('created_at', { ascending: true })
+          .limit(50)
 
-        const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+        if (histErr) console.error('fetchHistory error:', histErr)
+        if (data) {
+          // We need profiles for display names
+          const userIds = [...new Set(data.map((m: any) => m.user_id))]
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('*')
+            .in('id', userIds)
 
-        setMessages(
-          data.map((m: any) => ({
-            id: m.id,
-            user_id: m.user_id,
-            display_name: profileMap.get(m.user_id)?.display_name || 'Unknown',
-            avatar_url: profileMap.get(m.user_id)?.avatar_url || null,
-            text: m.text,
-            created_at: m.created_at,
-          }))
-        )
+          const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+
+          setMessages(
+            data.map((m: any) => ({
+              id: m.id,
+              user_id: m.user_id,
+              display_name: profileMap.get(m.user_id)?.display_name || 'Unknown',
+              avatar_url: profileMap.get(m.user_id)?.avatar_url || null,
+              text: m.text,
+              created_at: m.created_at,
+            }))
+          )
+        }
+      } catch (err) {
+        console.error('fetchHistory unexpected error:', err)
       }
     }
 

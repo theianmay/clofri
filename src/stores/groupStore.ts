@@ -134,29 +134,34 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   },
 
   createGroup: async (name: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { console.error('createGroup: no user'); return null }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { console.error('createGroup: no user'); return null }
 
-    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase()
+      const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase()
 
-    const { data: group, error } = await supabase
-      .from('groups')
-      .insert({ name, creator_id: user.id, invite_code: inviteCode } as any)
-      .select()
-      .single()
+      const { data: group, error } = await supabase
+        .from('groups')
+        .insert({ name, creator_id: user.id, invite_code: inviteCode } as any)
+        .select()
+        .single()
 
-    if (error) { console.error('createGroup insert error:', error); return null }
-    if (!group) { console.error('createGroup: no group returned'); return null }
+      if (error) { console.error('createGroup insert error:', error); return null }
+      if (!group) { console.error('createGroup: no group returned'); return null }
 
-    // Add creator as a member
-    const { error: memberError } = await supabase
-      .from('group_members')
-      .insert({ group_id: (group as any).id, user_id: user.id, role: 'creator' } as any)
+      // Add creator as a member
+      const { error: memberError } = await supabase
+        .from('group_members')
+        .insert({ group_id: (group as any).id, user_id: user.id, role: 'creator' } as any)
 
-    if (memberError) console.error('createGroup member insert error:', memberError)
+      if (memberError) console.error('createGroup member insert error:', memberError)
 
-    await get().fetchGroups()
-    return group as Group
+      await get().fetchGroups()
+      return group as Group
+    } catch (err) {
+      console.error('createGroup unexpected error:', err)
+      return null
+    }
   },
 
   joinGroupByCode: async (code: string) => {
@@ -197,61 +202,77 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   },
 
   leaveGroup: async (groupId: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
-    await supabase
-      .from('group_members')
-      .delete()
-      .eq('group_id', groupId)
-      .eq('user_id', user.id)
+      await supabase
+        .from('group_members')
+        .delete()
+        .eq('group_id', groupId)
+        .eq('user_id', user.id)
 
-    await get().fetchGroups()
+      await get().fetchGroups()
+    } catch (err) {
+      console.error('leaveGroup error:', err)
+    }
   },
 
   endGroupSession: async (groupId: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
 
-    // Get member IDs before deleting them so we can notify
-    const group = get().groups.find((g) => g.id === groupId)
-    const memberIds = group?.members
-      .map((m) => m.user_id)
-      .filter((id) => id !== user?.id) || []
+      // Get member IDs before deleting them so we can notify
+      const group = get().groups.find((g) => g.id === groupId)
+      const memberIds = group?.members
+        .map((m) => m.user_id)
+        .filter((id) => id !== user?.id) || []
 
-    // Delete all messages for this group
-    await supabase.from('messages').delete().eq('group_id', groupId)
-    // Mark group as inactive
-    await supabase.from('groups').update({ is_active: false } as any).eq('id', groupId)
-    // Remove all members
-    await supabase.from('group_members').delete().eq('group_id', groupId)
+      // Delete all messages for this group
+      await supabase.from('messages').delete().eq('group_id', groupId)
+      // Mark group as inactive
+      await supabase.from('groups').update({ is_active: false } as any).eq('id', groupId)
+      // Remove all members
+      await supabase.from('group_members').delete().eq('group_id', groupId)
 
-    // Notify other members via lobby broadcast
-    const lobbyChannel = usePresenceStore.getState().channel
-    if (lobbyChannel && memberIds.length > 0) {
-      lobbyChannel.send({
-        type: 'broadcast',
-        event: 'group_ended',
-        payload: { group_id: groupId, member_ids: memberIds, group_name: group?.name },
-      })
+      // Notify other members via lobby broadcast
+      const lobbyChannel = usePresenceStore.getState().channel
+      if (lobbyChannel && memberIds.length > 0) {
+        lobbyChannel.send({
+          type: 'broadcast',
+          event: 'group_ended',
+          payload: { group_id: groupId, member_ids: memberIds, group_name: group?.name },
+        })
+      }
+
+      await get().fetchGroups()
+    } catch (err) {
+      console.error('endGroupSession error:', err)
     }
-
-    await get().fetchGroups()
   },
 
   deleteGroup: async (groupId: string) => {
-    await supabase.from('group_members').delete().eq('group_id', groupId)
-    await supabase.from('messages').delete().eq('group_id', groupId)
-    await supabase.from('groups').delete().eq('id', groupId)
-    await get().fetchGroups()
+    try {
+      await supabase.from('group_members').delete().eq('group_id', groupId)
+      await supabase.from('messages').delete().eq('group_id', groupId)
+      await supabase.from('groups').delete().eq('id', groupId)
+      await get().fetchGroups()
+    } catch (err) {
+      console.error('deleteGroup error:', err)
+    }
   },
 
   kickMember: async (groupId: string, userId: string) => {
-    await supabase
-      .from('group_members')
-      .delete()
-      .eq('group_id', groupId)
-      .eq('user_id', userId)
+    try {
+      await supabase
+        .from('group_members')
+        .delete()
+        .eq('group_id', groupId)
+        .eq('user_id', userId)
 
-    await get().fetchGroups()
+      await get().fetchGroups()
+    } catch (err) {
+      console.error('kickMember error:', err)
+    }
   },
 }))

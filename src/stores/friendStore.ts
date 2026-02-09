@@ -29,56 +29,61 @@ export const useFriendStore = create<FriendState>((set, get) => ({
   fetchFriends: async () => {
     set({ loading: true })
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { set({ loading: false }); return }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { set({ loading: false }); return }
 
-    // Get all friendships involving this user
-    const { data: friendships } = await supabase
-      .from('friendships')
-      .select('*')
-      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+      // Get all friendships involving this user
+      const { data: friendships } = await supabase
+        .from('friendships')
+        .select('*')
+        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
 
-    if (!friendships || friendships.length === 0) {
-      set({ friends: [], pendingReceived: [], pendingSent: [], loading: false })
-      return
+      if (!friendships || friendships.length === 0) {
+        set({ friends: [], pendingReceived: [], pendingSent: [], loading: false })
+        return
+      }
+
+      // Get all related profiles
+      const userIds = new Set<string>()
+      friendships.forEach((f: any) => {
+        userIds.add(f.requester_id)
+        userIds.add(f.addressee_id)
+      })
+      userIds.delete(user.id)
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', [...userIds])
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+
+      const getFriend = (f: any): Profile => {
+        const friendId = f.requester_id === user.id ? f.addressee_id : f.requester_id
+        return profileMap.get(friendId)!
+      }
+
+      const accepted = friendships
+        .filter((f: any) => f.status === 'accepted')
+        .map((f: any) => ({ friendship: f as Friendship, friend: getFriend(f) }))
+        .filter((e: FriendEntry) => e.friend)
+
+      const pendingReceived = friendships
+        .filter((f: any) => f.status === 'pending' && f.addressee_id === user.id)
+        .map((f: any) => ({ friendship: f as Friendship, friend: getFriend(f) }))
+        .filter((e: FriendEntry) => e.friend)
+
+      const pendingSent = friendships
+        .filter((f: any) => f.status === 'pending' && f.requester_id === user.id)
+        .map((f: any) => ({ friendship: f as Friendship, friend: getFriend(f) }))
+        .filter((e: FriendEntry) => e.friend)
+
+      set({ friends: accepted, pendingReceived, pendingSent, loading: false })
+    } catch (err) {
+      console.error('fetchFriends error:', err)
+      set({ loading: false })
     }
-
-    // Get all related profiles
-    const userIds = new Set<string>()
-    friendships.forEach((f: any) => {
-      userIds.add(f.requester_id)
-      userIds.add(f.addressee_id)
-    })
-    userIds.delete(user.id)
-
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('*')
-      .in('id', [...userIds])
-
-    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
-
-    const getFriend = (f: any): Profile => {
-      const friendId = f.requester_id === user.id ? f.addressee_id : f.requester_id
-      return profileMap.get(friendId)!
-    }
-
-    const accepted = friendships
-      .filter((f: any) => f.status === 'accepted')
-      .map((f: any) => ({ friendship: f as Friendship, friend: getFriend(f) }))
-      .filter((e: FriendEntry) => e.friend)
-
-    const pendingReceived = friendships
-      .filter((f: any) => f.status === 'pending' && f.addressee_id === user.id)
-      .map((f: any) => ({ friendship: f as Friendship, friend: getFriend(f) }))
-      .filter((e: FriendEntry) => e.friend)
-
-    const pendingSent = friendships
-      .filter((f: any) => f.status === 'pending' && f.requester_id === user.id)
-      .map((f: any) => ({ friendship: f as Friendship, friend: getFriend(f) }))
-      .filter((e: FriendEntry) => e.friend)
-
-    set({ friends: accepted, pendingReceived, pendingSent, loading: false })
   },
 
   sendRequest: async (friendCode: string) => {
@@ -149,29 +154,44 @@ export const useFriendStore = create<FriendState>((set, get) => ({
   },
 
   acceptRequest: async (friendshipId: string) => {
-    await supabase
-      .from('friendships')
-      .update({ status: 'accepted' } as any)
-      .eq('id', friendshipId)
+    try {
+      await supabase
+        .from('friendships')
+        .update({ status: 'accepted' } as any)
+        .eq('id', friendshipId)
 
-    await get().fetchFriends()
+      await get().fetchFriends()
+    } catch (err) {
+      console.error('acceptRequest error:', err)
+      await get().fetchFriends()
+    }
   },
 
   rejectRequest: async (friendshipId: string) => {
-    await supabase
-      .from('friendships')
-      .delete()
-      .eq('id', friendshipId)
+    try {
+      await supabase
+        .from('friendships')
+        .delete()
+        .eq('id', friendshipId)
 
-    await get().fetchFriends()
+      await get().fetchFriends()
+    } catch (err) {
+      console.error('rejectRequest error:', err)
+      await get().fetchFriends()
+    }
   },
 
   removeFriend: async (friendshipId: string) => {
-    await supabase
-      .from('friendships')
-      .delete()
-      .eq('id', friendshipId)
+    try {
+      await supabase
+        .from('friendships')
+        .delete()
+        .eq('id', friendshipId)
 
-    await get().fetchFriends()
+      await get().fetchFriends()
+    } catch (err) {
+      console.error('removeFriend error:', err)
+      await get().fetchFriends()
+    }
   },
 }))

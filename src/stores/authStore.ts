@@ -22,21 +22,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   loading: true,
 
   initialize: async () => {
-    const { data: { session } } = await supabase.auth.getSession()
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
 
-    if (session?.user) {
-      const profile = await fetchOrCreateProfile(session.user)
-      set({ user: session.user, session, profile, loading: false })
-    } else {
+      if (session?.user) {
+        const profile = await fetchOrCreateProfile(session.user)
+        set({ user: session.user, session, profile, loading: false })
+      } else {
+        set({ loading: false })
+      }
+    } catch (err) {
+      console.error('Auth initialization failed:', err)
       set({ loading: false })
     }
 
     supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const profile = await fetchOrCreateProfile(session.user)
-        set({ user: session.user, session, profile })
-      } else {
-        set({ user: null, session: null, profile: null })
+      try {
+        if (session?.user) {
+          const profile = await fetchOrCreateProfile(session.user)
+          set({ user: session.user, session, profile })
+        } else {
+          set({ user: null, session: null, profile: null })
+        }
+      } catch (err) {
+        console.error('Auth state change handler failed:', err)
       }
     })
   },
@@ -49,11 +58,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signInWithMagicLink: async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin },
-    })
-    return { error: error?.message ?? null }
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin },
+      })
+      return { error: error?.message ?? null }
+    } catch (err) {
+      console.error('signInWithMagicLink error:', err)
+      return { error: 'Network error. Please try again.' }
+    }
   },
 
   signOut: async () => {
