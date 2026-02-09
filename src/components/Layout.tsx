@@ -531,7 +531,7 @@ export function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col min-h-screen md:min-h-0 md:h-screen overflow-hidden">
+      <main className="flex-1 flex flex-col h-dvh md:h-screen overflow-hidden">
         <div className="md:hidden h-12" />
         <ConnectionBanner />
         <Outlet />
