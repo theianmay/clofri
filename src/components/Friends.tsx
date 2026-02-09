@@ -330,7 +330,7 @@ export function Friends() {
                   onChange={(e) => setFriendCode(e.target.value.toUpperCase())}
                   autoFocus
                   maxLength={10}
-                  className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm font-mono tracking-wider"
+                  className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm font-mono-nostalgic tracking-wider"
                 />
                 <button
                   type="submit"
@@ -570,7 +570,19 @@ export function Friends() {
                   <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">
                     {categoryGroups.length > 0 ? 'Uncategorized' : 'Friends'}
                   </span>
-                  <span className="text-zinc-600 text-xs">{uncategorized.length}</span>
+                  <span className="text-zinc-600 text-xs">
+                    {uncategorized.length}
+                    {(() => {
+                      const ac = uncategorized.filter((f) => getStatus(f.friend.id) === 'active').length
+                      const ic = uncategorized.filter((f) => getStatus(f.friend.id) === 'idle').length
+                      return (
+                        <>
+                          {ac > 0 && <span className="text-green-400 ml-1">· {ac} on</span>}
+                          {ic > 0 && <span className="text-amber-400 ml-1">· {ic} idle</span>}
+                        </>
+                      )
+                    })()}
+                  </span>
                 </button>
                 {(isSearching || !collapsedSections.has('__uncategorized')) && (
                   <div className="space-y-1">
@@ -603,9 +615,9 @@ export function Friends() {
             {friends.length === 0 && (
               <div className="text-center py-20">
                 <Users className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
-                <p className="text-zinc-400 font-medium">No friends yet</p>
+                <p className="text-zinc-400 font-medium">Your buddy list is empty</p>
                 <p className="text-zinc-600 text-sm mt-1">
-                  Share your friend code or add someone by theirs
+                  Share your friend code to get started
                 </p>
                 {!showAdd && (
                   <button

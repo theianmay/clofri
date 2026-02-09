@@ -36,9 +36,9 @@ export function Messages() {
         ) : sessions.length === 0 ? (
           <div className="text-center py-20">
             <MessageCircle className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
-            <p className="text-zinc-400 font-medium">No active conversations</p>
+            <p className="text-zinc-400 font-medium">No open conversations</p>
             <p className="text-zinc-600 text-sm mt-1">
-              Start a chat from the Friends page
+              Message a friend from your buddy list
             </p>
             <button
               onClick={() => navigate('/')}

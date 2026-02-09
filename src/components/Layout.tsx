@@ -273,7 +273,7 @@ export function Layout() {
               ) : (
                 <>
                   <Copy className="w-4 h-4" />
-                  <span>{profile?.friend_code}</span>
+                  <span className="font-mono-nostalgic">{profile?.friend_code}</span>
                 </>
               )}
             </button>
@@ -498,7 +498,7 @@ export function Layout() {
                   ) : (
                     <>
                       <Copy className="w-4 h-4" />
-                      <span>{profile?.friend_code}</span>
+                      <span className="font-mono-nostalgic">{profile?.friend_code}</span>
                     </>
                   )}
                 </button>
