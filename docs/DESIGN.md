@@ -513,6 +513,7 @@ Currently using system defaults (no custom font-family set). The redesign will a
 - Theme toggle (light/dark)
 - Chat window color themes
 - Sound packs
+- **Pop-out DM windows** (desktop only) — `window.open()` standalone IM windows with `?popout=true` minimal layout, `BroadcastChannel` for cross-window state sync. Deferred because most users discover clofri on mobile first; desktop pop-outs are a power-user enhancement for later.
 
 ---
 
