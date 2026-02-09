@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../stores/authStore'
 import { usePresenceStore } from '../stores/presenceStore'
-import { playMessageSound, isSoundEnabled } from '../lib/sounds'
+import { playMessageSound, playNudgeSound, isSoundEnabled } from '../lib/sounds'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface DMMessage {
@@ -18,15 +18,17 @@ export interface DMMessage {
 interface UseDMChatOptions {
   sessionId: string
   friendId: string
+  onNudgeReceived?: (senderName: string) => void
 }
 
-export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
+export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOptions) {
   const profile = useAuthStore((s) => s.profile)
   const [messages, setMessages] = useState<DMMessage[]>([])
   const [typingUsers, setTypingUsers] = useState<string[]>([])
   const channelRef = useRef<RealtimeChannel | null>(null)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isTypingRef = useRef(false)
+  const autoRepliedRef = useRef(false)
 
   useEffect(() => {
     if (!profile || !sessionId || !friendId) return
@@ -100,6 +102,16 @@ export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
       }, 3000)
     })
 
+    // Listen for nudge
+    channel.on('broadcast', { event: 'nudge' }, ({ payload }) => {
+      const { sender_id, display_name } = payload as { sender_id: string; display_name: string }
+      if (sender_id === profile.id) return
+
+      if (isSoundEnabled()) playNudgeSound()
+      if ('vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 100])
+      onNudgeReceived?.(display_name)
+    })
+
     channel.subscribe()
 
     channelRef.current = channel
@@ -155,6 +167,33 @@ export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
       if (error) console.error('DM persist failed:', error)
 
       isTypingRef.current = false
+
+      // Auto-reply: if friend is idle/away, has auto-reply enabled, and has a status message
+      if (!autoRepliedRef.current) {
+        const presenceState = usePresenceStore.getState()
+        const friendStatus = presenceState.getStatus(friendId)
+        const friendUser = presenceState.onlineUsers.get(friendId)
+        if (
+          (friendStatus === 'idle') &&
+          friendUser?.auto_reply &&
+          friendUser?.status_message
+        ) {
+          autoRepliedRef.current = true
+          const autoReplyMsg: DMMessage = {
+            id: `auto-reply-${crypto.randomUUID()}`,
+            sender_id: friendId,
+            receiver_id: profile.id,
+            display_name: friendUser.display_name,
+            avatar_url: friendUser.avatar_url,
+            text: `[Auto-reply] ${friendUser.status_message}`,
+            created_at: new Date().toISOString(),
+          }
+          // Small delay so it appears after the sent message
+          setTimeout(() => {
+            setMessages((prev) => [...prev, autoReplyMsg].slice(-50))
+          }, 500)
+        }
+      }
     },
     [profile, friendId, sessionId]
   )
@@ -177,5 +216,14 @@ export function useDMChat({ sessionId, friendId }: UseDMChatOptions) {
     }, 2000)
   }, [profile])
 
-  return { messages, typingUsers, sendMessage, sendTyping }
+  const sendNudge = useCallback(() => {
+    if (!profile || !channelRef.current) return
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'nudge',
+      payload: { sender_id: profile.id, display_name: profile.display_name },
+    })
+  }, [profile])
+
+  return { messages, typingUsers, sendMessage, sendTyping, sendNudge }
 }

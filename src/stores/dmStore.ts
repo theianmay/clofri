@@ -96,6 +96,49 @@ export const useDMStore = create<DMState>((set, get) => ({
         })
         .filter((s: DMSession) => s.friend)
 
+      // --- Stale session cleanup (runs only on initial login) ---
+      if (!_initialFetchDone) {
+        const STALE_SESSION_MS = 30 * 60 * 1000 // 30 minutes
+        const presenceStore = usePresenceStore.getState()
+        const staleSessions: string[] = []
+
+        for (const session of sessions) {
+          const friendStatus = presenceStore.getStatus(session.friendId)
+          if (friendStatus !== 'offline') continue
+
+          // Friend is offline — check how stale the session is
+          const { data: lastMsg } = await supabase
+            .from('direct_messages')
+            .select('created_at')
+            .eq('session_id', session.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+
+          const lastActivity = lastMsg && lastMsg.length > 0
+            ? new Date((lastMsg[0] as any).created_at).getTime()
+            : new Date(session.startedAt).getTime()
+
+          if (Date.now() - lastActivity > STALE_SESSION_MS) {
+            staleSessions.push(session.id)
+          }
+        }
+
+        // Auto-end stale sessions
+        for (const staleId of staleSessions) {
+          await supabase.from('direct_messages').delete().eq('session_id', staleId)
+          await supabase
+            .from('dm_sessions')
+            .update({ is_active: false, ended_at: new Date().toISOString() } as never)
+            .eq('id', staleId)
+        }
+
+        // Remove stale sessions from the list before continuing
+        if (staleSessions.length > 0) {
+          const staleSet = new Set(staleSessions)
+          sessions.splice(0, sessions.length, ...sessions.filter((s) => !staleSet.has(s.id)))
+        }
+      }
+
       // Check unread — look for messages newer than last read
       const lastRead = getLastRead()
       const unread = new Set<string>()

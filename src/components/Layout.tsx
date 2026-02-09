@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { MessageCircle, Users, LogOut, Copy, Check, Pencil, Menu, X, ChevronsLeft, ChevronsRight, Volume2, VolumeX, Mail, Share2 } from 'lucide-react'
+import { MessageCircle, Users, LogOut, Copy, Check, Pencil, Menu, X, ChevronsLeft, ChevronsRight, Volume2, VolumeX, Mail, Share2, MessageSquareQuote, Reply } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { ConnectionBanner } from './ConnectionBanner'
 import { usePresenceStore } from '../stores/presenceStore'
@@ -12,7 +12,7 @@ import { useGroupStore } from '../stores/groupStore'
 
 export function Layout() {
   const { profile, signOut, updateProfile } = useAuthStore()
-  const { join: joinPresence, leave: leavePresence, getStatus } = usePresenceStore()
+  const { join: joinPresence, leave: leavePresence, getStatus, statusMessage, autoReply, setStatusMessage, setAutoReply } = usePresenceStore()
 
   useEffect(() => {
     if (profile) {
@@ -29,6 +29,9 @@ export function Layout() {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const nameInputRef = useRef<HTMLInputElement>(null)
+  const [editingStatus, setEditingStatus] = useState(false)
+  const [statusInput, setStatusInput] = useState('')
+  const statusInputRef = useRef<HTMLInputElement>(null)
   const location = useLocation()
 
   useEffect(() => {
@@ -53,6 +56,27 @@ export function Layout() {
       nameInputRef.current.select()
     }
   }, [editingName])
+
+  useEffect(() => {
+    if (editingStatus && statusInputRef.current) {
+      statusInputRef.current.focus()
+    }
+  }, [editingStatus])
+
+  const startEditingStatus = () => {
+    setStatusInput(statusMessage || '')
+    setEditingStatus(true)
+  }
+
+  const saveStatus = () => {
+    setEditingStatus(false)
+    setStatusMessage(statusInput.trim() || null)
+  }
+
+  const handleStatusKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') { e.preventDefault(); saveStatus() }
+    if (e.key === 'Escape') setEditingStatus(false)
+  }
 
   const toggleCollapsed = () => {
     const next = !collapsed
@@ -196,6 +220,45 @@ export function Layout() {
                 )}
               </div>
             </div>
+            {/* Status message */}
+            {editingStatus ? (
+              <div className="flex items-center gap-1">
+                <MessageSquareQuote className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                <input
+                  ref={statusInputRef}
+                  value={statusInput}
+                  onChange={(e) => setStatusInput(e.target.value)}
+                  onBlur={saveStatus}
+                  onKeyDown={handleStatusKeyDown}
+                  placeholder="Set a status..."
+                  className="flex-1 min-w-0 bg-zinc-800 text-zinc-300 text-xs italic px-1.5 py-0.5 rounded border border-zinc-600 focus:border-blue-500 focus:outline-none"
+                  maxLength={150}
+                />
+                <button
+                  onPointerDown={(e) => { e.preventDefault(); saveStatus() }}
+                  className="p-1 text-green-400 hover:text-green-300 transition-colors shrink-0"
+                >
+                  <Check className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={startEditingStatus}
+                className="flex items-center gap-1.5 text-zinc-500 text-xs italic hover:text-zinc-400 transition-colors truncate"
+              >
+                <MessageSquareQuote className="w-3 h-3 shrink-0" />
+                <span className="truncate">{statusMessage || 'Set a status...'}</span>
+              </button>
+            )}
+            {/* Auto-reply toggle */}
+            <button
+              onClick={() => setAutoReply(!autoReply)}
+              className={`flex items-center gap-1.5 text-xs px-1 py-0.5 rounded transition-colors ${autoReply ? 'text-blue-400' : 'text-zinc-600 hover:text-zinc-400'}`}
+              title={autoReply ? 'Auto-reply is on — your status will be sent as a reply when you\'re away' : 'Enable auto-reply when away'}
+            >
+              <Reply className="w-3 h-3" />
+              Auto-reply {autoReply ? 'on' : 'off'}
+            </button>
           </div>
           <div className="space-y-0.5">
             <button
@@ -382,6 +445,45 @@ export function Layout() {
                     )}
                   </div>
                 </div>
+                {/* Status message */}
+                {editingStatus ? (
+                  <div className="flex items-center gap-1">
+                    <MessageSquareQuote className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                    <input
+                      ref={statusInputRef}
+                      value={statusInput}
+                      onChange={(e) => setStatusInput(e.target.value)}
+                      onBlur={saveStatus}
+                      onKeyDown={handleStatusKeyDown}
+                      placeholder="Set a status..."
+                      className="flex-1 min-w-0 bg-zinc-800 text-zinc-300 text-xs italic px-1.5 py-0.5 rounded border border-zinc-600 focus:border-blue-500 focus:outline-none"
+                      maxLength={150}
+                    />
+                    <button
+                      onPointerDown={(e) => { e.preventDefault(); saveStatus() }}
+                      className="p-1 text-green-400 hover:text-green-300 transition-colors shrink-0"
+                    >
+                      <Check className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={startEditingStatus}
+                    className="flex items-center gap-1.5 text-zinc-500 text-xs italic hover:text-zinc-400 transition-colors truncate"
+                  >
+                    <MessageSquareQuote className="w-3 h-3 shrink-0" />
+                    <span className="truncate">{statusMessage || 'Set a status...'}</span>
+                  </button>
+                )}
+                {/* Auto-reply toggle */}
+                <button
+                  onClick={() => setAutoReply(!autoReply)}
+                  className={`flex items-center gap-1.5 text-xs px-1 py-0.5 rounded transition-colors ${autoReply ? 'text-blue-400' : 'text-zinc-600 hover:text-zinc-400'}`}
+                  title={autoReply ? 'Auto-reply is on — your status will be sent as a reply when you\'re away' : 'Enable auto-reply when away'}
+                >
+                  <Reply className="w-3 h-3" />
+                  Auto-reply {autoReply ? 'on' : 'off'}
+                </button>
               </div>
               <div className="space-y-0.5">
                 <button
@@ -429,7 +531,7 @@ export function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col min-h-screen md:min-h-0 md:h-screen overflow-hidden">
+      <main className="flex-1 flex flex-col h-dvh md:h-screen overflow-hidden">
         <div className="md:hidden h-12" />
         <ConnectionBanner />
         <Outlet />

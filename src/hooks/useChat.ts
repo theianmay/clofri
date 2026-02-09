@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../stores/authStore'
 import { usePresenceStore, type UserStatus } from '../stores/presenceStore'
 import { useGroupStore } from '../stores/groupStore'
-import { playMessageSound, isSoundEnabled } from '../lib/sounds'
+import { playMessageSound, playNudgeSound, isSoundEnabled } from '../lib/sounds'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface ChatMessage {
@@ -24,9 +24,10 @@ export interface PresenceMember {
 
 interface UseChatOptions {
   groupId: string
+  onNudgeReceived?: (senderName: string) => void
 }
 
-export function useChat({ groupId }: UseChatOptions) {
+export function useChat({ groupId, onNudgeReceived }: UseChatOptions) {
   const profile = useAuthStore((s) => s.profile)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [members, setMembers] = useState<PresenceMember[]>([])
@@ -109,6 +110,16 @@ export function useChat({ groupId }: UseChatOptions) {
       setTimeout(() => {
         setTypingUsers((prev) => prev.filter((n) => n !== display_name))
       }, 3000)
+    })
+
+    // Listen for nudge
+    channel.on('broadcast', { event: 'nudge' }, ({ payload }) => {
+      const { user_id, display_name } = payload as { user_id: string; display_name: string }
+      if (user_id === profile.id) return
+
+      if (isSoundEnabled()) playNudgeSound()
+      if ('vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 100])
+      onNudgeReceived?.(display_name)
     })
 
     // Helper to read presence state and update members
@@ -233,5 +244,14 @@ export function useChat({ groupId }: UseChatOptions) {
     }, 2000)
   }, [profile])
 
-  return { messages, members, typingUsers, sendMessage, sendTyping }
+  const sendNudge = useCallback(() => {
+    if (!profile || !channelRef.current) return
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'nudge',
+      payload: { user_id: profile.id, display_name: profile.display_name },
+    })
+  }, [profile])
+
+  return { messages, members, typingUsers, sendMessage, sendTyping, sendNudge }
 }

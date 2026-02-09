@@ -7,7 +7,7 @@ import { AvatarIcon } from './AvatarIcon'
 
 export function Messages() {
   const { sessions, loading, unreadDMs, fetchSessions } = useDMStore()
-  const { getStatus } = usePresenceStore()
+  const { getStatus, getStatusMessage } = usePresenceStore()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -82,6 +82,11 @@ export function Messages() {
                     <p className="text-zinc-500 text-xs">
                       {status === 'active' ? 'Active now' : status === 'idle' ? 'Idle' : 'Offline'}
                     </p>
+                    {getStatusMessage(session.friendId) && (
+                      <p className="text-zinc-500 text-xs italic truncate">
+                        "{getStatusMessage(session.friendId)}"
+                      </p>
+                    )}
                   </div>
                   <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
                 </button>

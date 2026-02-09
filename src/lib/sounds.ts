@@ -33,6 +33,40 @@ export function playMessageSound() {
   }
 }
 
+export function playNudgeSound() {
+  try {
+    const ctx = getAudioContext()
+    if (ctx.state === 'suspended') ctx.resume()
+
+    // Buzzy vibration — two overlapping oscillators
+    const osc1 = ctx.createOscillator()
+    const osc2 = ctx.createOscillator()
+    const gain = ctx.createGain()
+
+    osc1.connect(gain)
+    osc2.connect(gain)
+    gain.connect(ctx.destination)
+
+    osc1.type = 'sawtooth'
+    osc1.frequency.setValueAtTime(150, ctx.currentTime)
+    osc1.frequency.linearRampToValueAtTime(80, ctx.currentTime + 0.4)
+
+    osc2.type = 'square'
+    osc2.frequency.setValueAtTime(160, ctx.currentTime)
+    osc2.frequency.linearRampToValueAtTime(90, ctx.currentTime + 0.4)
+
+    gain.gain.setValueAtTime(0.12, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5)
+
+    osc1.start(ctx.currentTime)
+    osc2.start(ctx.currentTime)
+    osc1.stop(ctx.currentTime + 0.5)
+    osc2.stop(ctx.currentTime + 0.5)
+  } catch {
+    // Audio not available, silently fail
+  }
+}
+
 // Respect user preference
 const SOUND_KEY = 'clofri-sound-enabled'
 
