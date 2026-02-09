@@ -58,11 +58,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signInWithMagicLink: async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin },
-    })
-    return { error: error?.message ?? null }
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin },
+      })
+      return { error: error?.message ?? null }
+    } catch (err) {
+      console.error('signInWithMagicLink error:', err)
+      return { error: 'Network error. Please try again.' }
+    }
   },
 
   signOut: async () => {
