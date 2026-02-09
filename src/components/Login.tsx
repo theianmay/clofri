@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuthStore } from '../stores/authStore'
 import { Mail, Loader2 } from 'lucide-react'
 
@@ -8,6 +8,14 @@ export function Login() {
   const [magicLinkSent, setMagicLinkSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  // Reset URL and title so BrowserRouter starts at / after sign-on
+  useEffect(() => {
+    document.title = 'clofri'
+    if (window.location.pathname !== '/') {
+      window.history.replaceState(null, '', '/')
+    }
+  }, [])
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
