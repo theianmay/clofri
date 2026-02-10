@@ -31,12 +31,15 @@ This document covers the full data lifecycle for every table in clofri's Supabas
 
 ### Server-side (pg_cron)
 
-Two cron jobs are currently running:
+Five cron jobs are currently running:
 
 | Job name | Schedule | Action | SQL source |
 |----------|----------|--------|------------|
 | `cleanup-old-messages` | Every hour (`0 * * * *`) | Deletes rows from `messages` where `created_at < now() - 24 hours` | `supabase/enable_cleanup_cron.sql` |
 | `cleanup-stale-dm-sessions` | Every 30 min (`*/30 * * * *`) | Finds active `dm_sessions` idle >1 hour, deletes their `direct_messages`, marks session `is_active = false` | `supabase/cleanup_stale_dm_sessions.sql` |
+| `cleanup-old-dms` | Every hour (`0 * * * *`) | Deletes rows from `direct_messages` where `created_at < now() - 24 hours` | `supabase/cleanup_old_dms.sql` |
+| `purge-inactive-sessions` | Daily at 3 AM UTC (`0 3 * * *`) | Purges `dm_sessions` (inactive >7 days), `groups` (inactive >7 days), and their orphaned `group_members` | `supabase/purge_inactive_sessions.sql` |
+| `cleanup-orphaned-group-members` | Daily at 4 AM UTC (`0 4 * * *`) | Removes `group_members` rows for inactive groups (catches 0–7 day gap before purge job) | `supabase/cleanup_orphaned_group_members.sql` |
 
 ### Client-side
 
@@ -52,19 +55,13 @@ Two cron jobs are currently running:
 
 ## 3. Known Gaps
 
-### 3a. Inactive rows accumulate
+### ~~3a. Inactive rows accumulate~~ — RESOLVED
 
-**`dm_sessions`** and **`groups`** rows are marked `is_active = false` when ended but **never purged**. Over time these accumulate as dead rows. The `direct_messages` for ended sessions are deleted (client-side on end + `cleanup-stale-dm-sessions` cron for active-but-idle sessions), but the session metadata rows themselves persist.
+Fixed by `purge-inactive-sessions` cron (daily, purges rows older than 7 days).
 
-**Impact:** Low for now (small row size), but will grow indefinitely.
+### ~~3b. No server-side TTL for `direct_messages`~~ — RESOLVED
 
-### 3b. No server-side TTL for `direct_messages`
-
-The `cleanup-stale-dm-sessions` cron handles **active sessions that went idle** — it deletes their messages and ends the session. But there is no standalone TTL cron for `direct_messages` the way `cleanup-old-messages` handles group `messages`.
-
-If a DM session is still marked active (e.g., both users keep the tab open for days), its messages will persist beyond 24 hours. The `cleanup-old-messages` cron only targets the `messages` table (group messages), not `direct_messages`.
-
-**Impact:** Medium. A commented-out cron exists in `supabase/add_direct_messages.sql` but was never activated.
+Fixed by `cleanup-old-dms` cron (hourly, 24h TTL).
 
 ### 3c. Orphaned data on client failure
 
@@ -80,6 +77,10 @@ The `direct_messages` DELETE policy only allows `auth.uid() = sender_id`. The `e
 
 In practice this is mitigated by the `ON DELETE CASCADE` FK from `direct_messages.session_id → dm_sessions.id` — but sessions are marked inactive, not deleted, so the cascade never fires.
 
+### ~~3e-partial. Orphaned `group_members`~~ — RESOLVED
+
+Fixed by `cleanup-orphaned-group-members` cron (daily).
+
 ### 3e. localStorage grows unbounded
 
 | Key | Issue |
@@ -94,40 +95,15 @@ Other localStorage keys (`clofri-sidebar`, `clofri-status-message`, `clofri-auto
 
 ## 4. Recommendations
 
-### High priority
+### Completed
 
-1. **Add `direct_messages` TTL cron** — Activate the commented-out job in `add_direct_messages.sql`:
-   ```sql
-   select cron.schedule(
-     'cleanup-old-dms',
-     '0 * * * *',
-     $$delete from public.direct_messages where created_at < now() - interval '24 hours'$$
-   );
-   ```
+1. ~~**Add `direct_messages` TTL cron**~~ — Done. `cleanup-old-dms` cron running hourly.
+2. ~~**Purge old inactive rows**~~ — Done. `purge-inactive-sessions` cron running daily at 3 AM UTC.
+3. ~~**Orphaned `group_members` cleanup**~~ — Done. `cleanup-orphaned-group-members` cron running daily at 4 AM UTC.
 
-2. **Fix DM delete RLS** — Allow either participant to delete messages in their sessions:
-   ```sql
-   create policy "Session participants can delete DMs"
-     on public.direct_messages for delete
-     to authenticated
-     using (
-       auth.uid() = sender_id
-       or auth.uid() = receiver_id
-     );
-   ```
+4. ~~**Fix DM delete RLS**~~ — Done. Applied `supabase/fix_dm_delete_rls.sql`. Either participant can now delete DMs in their sessions.
 
-### Medium priority
-
-3. **Purge old inactive rows** — Add a cron or extend the existing cleanup function to delete:
-   - `dm_sessions` where `is_active = false` and `ended_at < now() - interval '7 days'`
-   - `groups` where `is_active = false` and `created_at < now() - interval '7 days'`
-   - `group_members` for inactive groups
-
-4. **Prune localStorage on app init** — On `fetchSessions` / `fetchGroups` completion, remove `clofri-dm-last-read` and `clofri-last-visited` entries that don't correspond to current active sessions/groups.
-
-### Low priority
-
-5. **Orphaned `group_members` cleanup** — Add a cron to remove `group_members` rows where the parent group has `is_active = false`.
+5. ~~**Prune localStorage on app init**~~ — Done. `pruneLastRead` in `dmStore.ts` and `pruneLastVisited` in `groupStore.ts` run after each successful fetch, removing entries for sessions/groups that no longer exist.
 
 ---
 

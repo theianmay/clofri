@@ -34,6 +34,18 @@ function setLastVisited(groupId: string) {
   localStorage.setItem('clofri-last-visited', JSON.stringify(data))
 }
 
+function pruneLastVisited(activeGroupIds: Set<string>) {
+  const data = getLastVisited()
+  let changed = false
+  for (const key of Object.keys(data)) {
+    if (!activeGroupIds.has(key)) {
+      delete data[key]
+      changed = true
+    }
+  }
+  if (changed) localStorage.setItem('clofri-last-visited', JSON.stringify(data))
+}
+
 let _initialFetchDone = false
 
 export const useGroupStore = create<GroupState>((set, get) => ({
@@ -94,6 +106,9 @@ export const useGroupStore = create<GroupState>((set, get) => ({
 
       _initialFetchDone = true
       set({ groups: groupsWithMembers, loading: false })
+
+      // Prune stale localStorage entries for groups that no longer exist
+      pruneLastVisited(new Set(groupIds))
 
       // Check for unread messages
       await get().checkUnread(groupIds)

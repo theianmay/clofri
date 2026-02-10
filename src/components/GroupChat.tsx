@@ -263,7 +263,7 @@ export function GroupChat() {
         {/* Ephemeral notice */}
         <div className="px-4 py-1.5 bg-zinc-900/50 border-t border-zinc-800/50">
           <p className="text-zinc-600 text-[10px] text-center font-mono-nostalgic">
-            Messages are ephemeral — only the last 50 are shown
+            Messages are ephemeral — only the last 50 are shown and all messages are deleted after 24 hours
           </p>
         </div>
 

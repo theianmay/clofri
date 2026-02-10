@@ -24,6 +24,18 @@ function setLastRead(sessionId: string) {
   localStorage.setItem(LAST_READ_KEY, JSON.stringify(data))
 }
 
+function pruneLastRead(activeSessionIds: Set<string>) {
+  const data = getLastRead()
+  let changed = false
+  for (const key of Object.keys(data)) {
+    if (!activeSessionIds.has(key)) {
+      delete data[key]
+      changed = true
+    }
+  }
+  if (changed) localStorage.setItem(LAST_READ_KEY, JSON.stringify(data))
+}
+
 interface DMState {
   sessions: DMSession[]
   unreadDMs: Set<string>
@@ -160,6 +172,9 @@ export const useDMStore = create<DMState>((set, get) => ({
       }
 
       _initialFetchDone = true
+
+      // Prune stale localStorage entries for sessions that no longer exist
+      pruneLastRead(new Set(sessions.map((s) => s.id)))
 
       // Only update state if data actually changed to avoid re-render flicker
       const prev = get()
