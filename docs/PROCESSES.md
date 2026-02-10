@@ -347,6 +347,9 @@ All issues below have been **fixed** in the codebase.
 | 4 | `createGroup` lacked try-catch (spinner could get stuck) | `groupStore.ts` | Medium | ✅ Fixed |
 | 5 | `leaveGroup`, `endGroupSession`, `deleteGroup`, `kickMember` lacked try-catch | `groupStore.ts` | Medium | ✅ Fixed |
 | 6 | `signInWithMagicLink` lacked try-catch (Login spinner could get stuck) | `authStore.ts` | Medium | ✅ Fixed |
+| 7 | `fetchFriends`/`fetchGroups` set `loading: true` on every call — tab-return re-fetch replaces data with spinner; if Supabase is slow (token refresh after background), spinner gets stuck | `friendStore.ts`, `groupStore.ts` | High | ✅ Fixed |
+| 8 | DM incoming messages don't appear in real-time — channel lacked presence config (unlike group chat), making broadcast delivery unreliable; fixed by adding presence + track to match group chat pattern | `useDMChat.ts` | High | ✅ Fixed |
+| 9 | `fetchHistory` in both chat hooks uses full state replacement — overwrites any broadcast/optimistic messages received before DB query returns (race condition) | `useChat.ts`, `useDMChat.ts` | Medium | ✅ Fixed |
 
 ---
 

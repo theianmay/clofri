@@ -20,6 +20,8 @@ interface FriendState {
   removeFriend: (friendshipId: string) => Promise<void>
 }
 
+let _initialFetchDone = false
+
 export const useFriendStore = create<FriendState>((set, get) => ({
   friends: [],
   pendingReceived: [],
@@ -27,7 +29,7 @@ export const useFriendStore = create<FriendState>((set, get) => ({
   loading: false,
 
   fetchFriends: async () => {
-    set({ loading: true })
+    if (!_initialFetchDone) set({ loading: true })
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -79,9 +81,11 @@ export const useFriendStore = create<FriendState>((set, get) => ({
         .map((f: any) => ({ friendship: f as Friendship, friend: getFriend(f) }))
         .filter((e: FriendEntry) => e.friend)
 
+      _initialFetchDone = true
       set({ friends: accepted, pendingReceived, pendingSent, loading: false })
     } catch (err) {
       console.error('fetchFriends error:', err)
+      _initialFetchDone = true
       set({ loading: false })
     }
   },

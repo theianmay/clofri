@@ -54,17 +54,24 @@ export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOpt
 
           const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
 
-          setMessages(
-            data.map((m: any) => ({
-              id: m.id,
-              sender_id: m.sender_id,
-              receiver_id: m.receiver_id,
-              display_name: profileMap.get(m.sender_id)?.display_name || 'Unknown',
-              avatar_url: profileMap.get(m.sender_id)?.avatar_url || null,
-              text: m.text,
-              created_at: m.created_at,
-            }))
-          )
+          const dbMessages: DMMessage[] = data.map((m: any) => ({
+            id: m.id,
+            sender_id: m.sender_id,
+            receiver_id: m.receiver_id,
+            display_name: profileMap.get(m.sender_id)?.display_name || 'Unknown',
+            avatar_url: profileMap.get(m.sender_id)?.avatar_url || null,
+            text: m.text,
+            created_at: m.created_at,
+          }))
+
+          // Merge DB data with any optimistic/broadcast messages not yet persisted
+          setMessages((prev) => {
+            const dbIds = new Set(dbMessages.map(m => m.id))
+            const pending = prev.filter(m => !dbIds.has(m.id))
+            return [...dbMessages, ...pending]
+              .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+              .slice(-50)
+          })
         }
       } catch (err) {
         console.error('DM fetchHistory unexpected error:', err)
@@ -76,7 +83,9 @@ export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOpt
     // Realtime channel scoped to session
     const channelName = `dm-session:${sessionId}`
 
-    const channel = supabase.channel(channelName)
+    const channel = supabase.channel(channelName, {
+      config: { presence: { key: profile.id } },
+    })
 
     // Listen for broadcast messages
     channel.on('broadcast', { event: 'message' }, ({ payload }) => {
@@ -116,11 +125,26 @@ export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOpt
       onNudgeReceived?.(display_name)
     })
 
-    channel.subscribe()
+    channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await channel.track({
+          user_id: profile.id,
+          display_name: profile.display_name,
+          avatar_url: profile.avatar_url,
+        })
+      }
+    })
 
     channelRef.current = channel
 
+    // Refetch when tab becomes visible (catches messages missed while backgrounded)
+    const handleVisibility = () => {
+      if (!document.hidden) fetchHistory()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
       supabase.removeChannel(channel)
       channelRef.current = null
     }

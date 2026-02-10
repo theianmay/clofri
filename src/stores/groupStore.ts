@@ -34,13 +34,15 @@ function setLastVisited(groupId: string) {
   localStorage.setItem('clofri-last-visited', JSON.stringify(data))
 }
 
+let _initialFetchDone = false
+
 export const useGroupStore = create<GroupState>((set, get) => ({
   groups: [],
   loading: false,
   unreadGroups: new Set(),
 
   fetchGroups: async () => {
-    set({ loading: true })
+    if (!_initialFetchDone) set({ loading: true })
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -90,12 +92,14 @@ export const useGroupStore = create<GroupState>((set, get) => ({
           .map((m: any) => ({ ...m, profile: profileMap.get(m.user_id)! })),
       }))
 
+      _initialFetchDone = true
       set({ groups: groupsWithMembers, loading: false })
 
       // Check for unread messages
       await get().checkUnread(groupIds)
     } catch (err) {
       console.error('fetchGroups unexpected error:', err)
+      _initialFetchDone = true
       set({ loading: false })
     }
   },
