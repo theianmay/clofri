@@ -28,6 +28,7 @@ export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOpt
   const channelRef = useRef<RealtimeChannel | null>(null)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isTypingRef = useRef(false)
+  const lastTypingSentRef = useRef(0)
   const autoRepliedRef = useRef(false)
 
   useEffect(() => {
@@ -229,8 +230,11 @@ export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOpt
   const sendTyping = useCallback(() => {
     if (!profile || !channelRef.current) return
 
-    if (!isTypingRef.current) {
+    const now = Date.now()
+    // Throttle: only broadcast every 2 seconds so the receiver's 3s timeout stays fresh
+    if (!isTypingRef.current || now - (lastTypingSentRef.current || 0) > 2000) {
       isTypingRef.current = true
+      lastTypingSentRef.current = now
       channelRef.current.send({
         type: 'broadcast',
         event: 'typing',
