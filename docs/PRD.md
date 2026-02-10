@@ -149,7 +149,7 @@ clofri is a lightweight, real-time chat app designed for small, trusted friend g
 |----|-----------|--------|-------|
 | CHAT-1 | As a user, I can send text messages up to 2000 characters | ✅ Done | DB constraint `char_length(text) <= 2000` |
 | CHAT-2 | As a user, I see messages from others appear in real-time without refreshing | ✅ Done | Broadcast channel subscription |
-| CHAT-3 | As a user, I see typing indicators when others are composing a message | ✅ Done | Typing broadcast events |
+| CHAT-3 | As a user, I see typing indicators when others are composing a message | ✅ Done | Typing broadcast events, throttled every 2s to keep receiver's 3s timeout fresh |
 | CHAT-4 | As a user, my sent messages appear instantly (optimistic UI) before server confirms | ✅ Done | Local state update before DB insert |
 | CHAT-5 | As a user, I see each message with the sender's avatar, name, and timestamp | ✅ Done | Avatar + name for others, right-aligned for own |
 | CHAT-6 | As a user, the chat auto-scrolls to the latest message only when I'm near the bottom | ✅ Done | Smart scroll: only auto-scrolls when near bottom; shows "New messages" pill when scrolled up |
@@ -236,6 +236,7 @@ clofri is a lightweight, real-time chat app designed for small, trusted friend g
 | Real-time | Supabase Realtime (Broadcast + Presence) | Chat messages, typing indicators, online status, DM/session notifications |
 | Security | Row Level Security (RLS) | All tables have RLS policies enforcing access control |
 | Storage | localStorage | Unread timestamps, sidebar state, sound preference, friend categories |
+| Data cleanup | pg_cron (5 jobs) | Message TTL (24h), stale session cleanup, inactive row purging, orphaned member cleanup |
 
 ### Key Data Tables
 - **profiles** — User identity (display_name, avatar_url, friend_code)
@@ -265,6 +266,10 @@ clofri is a lightweight, real-time chat app designed for small, trusted friend g
 - ~~**AUTH-8**: Customized magic link email template (Supabase dashboard config)~~ ✅
 - ~~**UI Audit Round 3**: Custom ConfirmDialog (replaces all browser confirm), smooth expand/collapse animations, empty state CTAs, category delete confirmation, larger touch targets, ephemeral notice readability~~ ✅
 - ~~**Bug fixes**: Friend request delivery (visibility refetch), mobile display name save (onPointerDown), group online count (lobby presence), search filtering (collapsed sections + pending sections)~~ ✅
+- ~~**UI Redesign**: Nostalgic AIM/MSN theme — Tahoma font, translucent chat bubbles, IM window chrome, buddy list polish, login screen~~ ✅
+- ~~**Accessibility**: ARIA labels on presence dots, `prefers-reduced-motion` support, friend card layout fix~~ ✅
+- ~~**Data management audit**: Full lifecycle audit of all tables, 5 pg_cron jobs running, DM delete RLS fix, localStorage pruning~~ ✅
+- ~~**Bug fixes round 2**: Friends page empty state on transient query failure (defensive fetchFriends), typing indicator not persisting during continuous typing (throttle fix), ephemeral notice copy consistency~~ ✅
 - **AUTH-6**: Google OAuth configuration (Google Cloud Console setup) — *optional, can do post-deploy*
 
 ### Medium-term (post-validation)

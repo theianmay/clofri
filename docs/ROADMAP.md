@@ -1,4 +1,4 @@
-# Clofri — Roadmap
+# clofri — Roadmap
 
 ---
 
@@ -31,7 +31,15 @@
 - [x] **UI Audit Round 1** — Mobile touch accessibility (hover-only → always visible on mobile), 404 catch-all route, mobile GroupChat sidebar with invite code + actions, maxLength on chat inputs, Groups nav unread badge, ephemeral notice text fix, tag menu close on outside click, sound toggle in mobile sidebar, meta description.
 - [x] **UI Audit Round 2** — Mobile members overlay (fixed panel instead of flex push), leave group confirmation, console.log cleanup, maxLength on all form inputs (group name, friend code, join code), consolidated duplicate imports, removed unused vite.svg, theme-color meta tag.
 - [x] **Chat Best Practices** — Smart auto-scroll (only when near bottom + "New messages" pill), message grouping (consecutive messages within 2min collapse), auto-focus chat input on mount, clickable URLs via `linkifyText` utility, consistent XCircle icon for end session.
-- [ ] **UI / Layout redesign** - come up with the style, colors, and vibe. modern but also vintage, like an ode to the AIM/MSN Messengers of the world that are gone
+- [x] **UI / Layout redesign** — Nostalgic AIM/MSN theme: Tahoma font, translucent chat bubbles, IM window chrome, buddy list polish, login screen.
+- [x] **Accessibility pass** — ARIA labels on presence dots, `prefers-reduced-motion` support, friend card layout fix.
+- [x] **Data management audit** — Full lifecycle audit of all tables. See `docs/DATA_MANAGEMENT.md`.
+- [x] **Server-side cleanup (5 cron jobs)** — `cleanup-old-messages` (group msgs 24h), `cleanup-stale-dm-sessions` (idle DMs 1h), `cleanup-old-dms` (DM msgs 24h), `purge-inactive-sessions` (dead rows 7d), `cleanup-orphaned-group-members` (daily). SQL files in `supabase/`.
+- [x] **DM delete RLS fix** — Either participant can now delete DMs in their sessions. Applied `supabase/fix_dm_delete_rls.sql`.
+- [x] **localStorage pruning** — `pruneLastRead` and `pruneLastVisited` run after each fetch, removing stale entries.
+- [x] **Bug fix: Friends empty state** — `fetchFriends` no longer wipes the friends list on transient Supabase query errors.
+- [x] **Bug fix: Typing indicator** — Changed from one-shot gate to 2s throttle so the indicator persists during continuous typing.
+- [x] **Ephemeral notice copy** — Both DM and Group chat now consistently say "only the last 50 are shown and all messages are deleted after 24 hours".
 
 ---
 
@@ -48,8 +56,8 @@
 - [ ] **Discord / GitHub OAuth** — Additional login providers beyond Google + email.
 - [ ] **Link previews** — Detect URLs in messages and render basic Open Graph previews.
 - [ ] **Rate limiting** — Server-side message rate limiting (via Supabase Edge Functions or PartyKit).
-- [ ] **Friend categories sync** — Migrate category/assignment data from localStorage to Supabase tables for cross-device sync.
-- [ ] **Typing indicator improvements** — Debounce typing events, show "X is typing..." on the Messages list page (not just inside the chat).
+- [ ] **localStorage → Supabase migration** — Migrate status message, auto-reply, friend categories, category assignments, DM last-read, and group last-visited from localStorage to Supabase for cross-device sync. Keep sidebar state and sound toggle in localStorage (per-device). See `docs/DATA_MANAGEMENT.md` §4.
+- [ ] **Typing indicator on Messages list** — Show "X is typing..." on the Messages page session cards (not just inside the chat).
 
 ---
 
