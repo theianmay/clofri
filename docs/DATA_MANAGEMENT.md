@@ -105,6 +105,23 @@ Other localStorage keys (`clofri-sidebar`, `clofri-status-message`, `clofri-auto
 
 5. ~~**Prune localStorage on app init**~~ — Done. `pruneLastRead` in `dmStore.ts` and `pruneLastVisited` in `groupStore.ts` run after each successful fetch, removing entries for sessions/groups that no longer exist.
 
+### Future: Migrate localStorage state to Supabase
+
+Some localStorage data represents meaningful user state that should eventually persist across devices. Recommended split:
+
+| Data | Current | Target | Reason |
+|------|---------|--------|--------|
+| Sidebar collapsed | localStorage | **Keep in localStorage** | Per-device preference |
+| Sound toggle | localStorage | **Keep in localStorage** | Per-device preference |
+| Status message | localStorage | **Move to Supabase** | Already visible to others via presence; should persist across devices |
+| Auto-reply flag | localStorage | **Move to Supabase** | Same as above |
+| Friend categories | localStorage | **Move to Supabase** | User-created data that should survive device changes |
+| Category assignments | localStorage | **Move to Supabase** | Same as above |
+| DM last-read | localStorage | **Move to Supabase** | Unread badges should be consistent across devices |
+| Group last-visited | localStorage | **Move to Supabase** | Same as above |
+
+This would require new Supabase tables or a `user_preferences` JSONB column on `profiles`. Not urgent for single-device usage but important before multi-device support.
+
 ---
 
 ## 5. Current Cron Jobs Reference
