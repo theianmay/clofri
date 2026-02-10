@@ -442,6 +442,7 @@ These ideas are documented for future revisiting. Implementation details for Sig
 | **Day/night greeting** | MSN Plus! | Low | "Good morning, [name]!" based on time of day |
 | **Sound packs** | MSN Plus! / Trillian | Medium | Swap notification sounds between themed packs |
 | **Chat log export** | IRC/mIRC | Medium | Download conversation before session ends |
+| **Busy/DND status** | AIM / MSN | Medium | Add a "Busy" presence state (red dot). Requires extending `UserStatus` type, presence tracking, all status display components, and possibly a manual status picker |
 
 ---
 

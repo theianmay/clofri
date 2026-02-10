@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuthStore } from '../stores/authStore'
 import { Mail, Loader2 } from 'lucide-react'
 
@@ -8,6 +8,14 @@ export function Login() {
   const [magicLinkSent, setMagicLinkSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  // Reset URL and title so BrowserRouter starts at / after sign-on
+  useEffect(() => {
+    document.title = 'clofri'
+    if (window.location.pathname !== '/') {
+      window.history.replaceState(null, '', '/')
+    }
+  }, [])
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,9 +46,9 @@ export function Login() {
           {magicLinkSent ? (
             <div className="text-center py-4">
               <Mail className="w-10 h-10 text-blue-400 mx-auto mb-3" />
-              <p className="text-white font-medium">Check your email</p>
+              <p className="text-white font-medium">Check your inbox</p>
               <p className="text-zinc-400 text-sm mt-1">
-                We sent a login link to <span className="text-white">{email}</span>
+                We sent a sign-on link to <span className="text-white">{email}</span>
               </p>
               <button
                 onClick={() => setMagicLinkSent(false)}
@@ -66,14 +74,15 @@ export function Login() {
                   className="w-full mt-3 bg-blue-600 text-white font-medium py-2.5 px-4 rounded-xl hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Send magic link
+                  {loading ? 'Signing on...' : 'Sign on'}
                 </button>
               </form>
             </>
           )}
         </div>
-
-        <p className="text-zinc-600 text-xs text-center mt-6">
+        
+        <p className="text-zinc-400 mt-2 text-center">sign on. see who's here.</p>
+        <p className="text-zinc-600 text-xs text-center mt-6 font-mono-nostalgic">
           Messages are ephemeral. If you're not here, you miss it.
         </p>
       </div>

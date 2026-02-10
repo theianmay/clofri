@@ -55,7 +55,7 @@ function FriendCard({
 
   return (
     <div
-      className={`flex items-center gap-3 p-3 rounded-xl border group ${
+      className={`flex items-start gap-3 p-3 rounded-xl border group ${
         isOffline
           ? 'bg-zinc-900/50 border-zinc-800/50'
           : 'bg-zinc-900 border-zinc-800'
@@ -67,7 +67,7 @@ function FriendCard({
           displayName={friend.display_name}
           className={isOffline ? 'opacity-50' : undefined}
         />
-        <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 ${statusColor} rounded-full border-2 border-zinc-900`} />
+        <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 ${statusColor} rounded-full border-2 border-zinc-900`} aria-label={statusText} />
       </div>
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-medium truncate ${isOffline ? 'text-zinc-400' : 'text-white'}`}>
@@ -80,39 +80,41 @@ function FriendCard({
           </p>
         )}
       </div>
-      <div className="relative" data-tag-menu>
+      <div className="flex items-center gap-0.5 pt-0.5">
         <button
-          onClick={() => setTagMenuOpen(tagMenuOpen === friendship.id ? null : friendship.id)}
-          className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-zinc-300 rounded-lg transition-all"
-          title="Set category"
+          onClick={() => handleStartDM(friend.id)}
+          className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-blue-400 rounded-lg transition-all"
+          title="Message"
         >
-          <Tag className="w-3.5 h-3.5" />
+          <MessageCircle className="w-4 h-4" />
         </button>
-        {tagMenuOpen === friendship.id && (
-          <div className="absolute right-0 top-full mt-1 z-20 bg-zinc-800 border border-zinc-700 rounded-lg py-1 min-w-[120px] shadow-xl">
-            <button onClick={() => { assignFriend(friendship.id, null); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-700 text-left">None</button>
-            {categories.map((c) => (
-              <button key={c.id} onClick={() => { assignFriend(friendship.id, c.id); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-white hover:bg-zinc-700 text-left flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${c.color}`} /> {c.name}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="relative" data-tag-menu>
+          <button
+            onClick={() => setTagMenuOpen(tagMenuOpen === friendship.id ? null : friendship.id)}
+            className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-zinc-300 rounded-lg transition-all"
+            title="Set category"
+          >
+            <Tag className="w-3.5 h-3.5" />
+          </button>
+          {tagMenuOpen === friendship.id && (
+            <div className="absolute right-0 top-full mt-1 z-20 bg-zinc-800 border border-zinc-700 rounded-lg py-1 min-w-[120px] shadow-xl">
+              <button onClick={() => { assignFriend(friendship.id, null); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-700 text-left">None</button>
+              {categories.map((c) => (
+                <button key={c.id} onClick={() => { assignFriend(friendship.id, c.id); setTagMenuOpen(null) }} className="w-full px-3 py-1.5 text-xs text-white hover:bg-zinc-700 text-left flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${c.color}`} /> {c.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={() => handleRemove(friendship.id)}
+          className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
+          title="Remove friend"
+        >
+          <UserMinus className="w-4 h-4" />
+        </button>
       </div>
-      <button
-        onClick={() => handleStartDM(friend.id)}
-        className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-blue-400 rounded-lg transition-all"
-        title="Message"
-      >
-        <MessageCircle className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => handleRemove(friendship.id)}
-        className="md:opacity-0 md:group-hover:opacity-100 p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-all"
-        title="Remove friend"
-      >
-        <UserMinus className="w-4 h-4" />
-      </button>
     </div>
   )
 }
@@ -330,7 +332,7 @@ export function Friends() {
                   onChange={(e) => setFriendCode(e.target.value.toUpperCase())}
                   autoFocus
                   maxLength={10}
-                  className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm font-mono tracking-wider"
+                  className="flex-1 bg-zinc-800 text-white placeholder-zinc-500 px-3 py-2 rounded-lg border border-zinc-700 focus:border-blue-500 focus:outline-none text-sm font-mono-nostalgic tracking-wider"
                 />
                 <button
                   type="submit"
@@ -570,7 +572,19 @@ export function Friends() {
                   <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">
                     {categoryGroups.length > 0 ? 'Uncategorized' : 'Friends'}
                   </span>
-                  <span className="text-zinc-600 text-xs">{uncategorized.length}</span>
+                  <span className="text-zinc-600 text-xs">
+                    {uncategorized.length}
+                    {(() => {
+                      const ac = uncategorized.filter((f) => getStatus(f.friend.id) === 'active').length
+                      const ic = uncategorized.filter((f) => getStatus(f.friend.id) === 'idle').length
+                      return (
+                        <>
+                          {ac > 0 && <span className="text-green-400 ml-1">· {ac} on</span>}
+                          {ic > 0 && <span className="text-amber-400 ml-1">· {ic} idle</span>}
+                        </>
+                      )
+                    })()}
+                  </span>
                 </button>
                 {(isSearching || !collapsedSections.has('__uncategorized')) && (
                   <div className="space-y-1">
@@ -603,9 +617,9 @@ export function Friends() {
             {friends.length === 0 && (
               <div className="text-center py-20">
                 <Users className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
-                <p className="text-zinc-400 font-medium">No friends yet</p>
+                <p className="text-zinc-400 font-medium">Your buddy list is empty</p>
                 <p className="text-zinc-600 text-sm mt-1">
-                  Share your friend code or add someone by theirs
+                  Share your friend code to get started
                 </p>
                 {!showAdd && (
                   <button

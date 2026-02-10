@@ -36,9 +36,9 @@ export function Messages() {
         ) : sessions.length === 0 ? (
           <div className="text-center py-20">
             <MessageCircle className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
-            <p className="text-zinc-400 font-medium">No active conversations</p>
+            <p className="text-zinc-400 font-medium">No open conversations</p>
             <p className="text-zinc-600 text-sm mt-1">
-              Start a chat from the Friends page
+              Message a friend from your buddy list
             </p>
             <button
               onClick={() => navigate('/')}
@@ -70,7 +70,10 @@ export function Messages() {
                       avatarUrl={session.friend.avatar_url}
                       displayName={session.friend.display_name}
                     />
-                    <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 ${statusColor} rounded-full border-2 border-zinc-900`} />
+                    <span
+                      className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 ${statusColor} rounded-full border-2 border-zinc-900`}
+                      aria-label={status === 'active' ? 'Online' : status === 'idle' ? 'Idle' : 'Offline'}
+                    />
                     {hasUnread && (
                       <span className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-zinc-900" />
                     )}

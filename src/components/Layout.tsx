@@ -187,7 +187,7 @@ export function Layout() {
             <div className="flex items-center gap-3">
               <button onClick={() => setShowAvatarPicker(true)} className="relative shrink-0" title="Change avatar">
                 <AvatarIcon avatarUrl={profile?.avatar_url || null} displayName={profile?.display_name || ''} size="sm" />
-                <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColor} rounded-full border-2 border-zinc-900`} />
+                <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColor} rounded-full border-2 border-zinc-900`} aria-label={presenceStatus === 'active' ? 'Online' : presenceStatus === 'idle' ? 'Idle' : 'Offline'} />
               </button>
               <div className="flex-1 min-w-0">
                 {editingName ? (
@@ -273,7 +273,7 @@ export function Layout() {
               ) : (
                 <>
                   <Copy className="w-4 h-4" />
-                  <span>{profile?.friend_code}</span>
+                  <span className="font-mono-nostalgic">{profile?.friend_code}</span>
                 </>
               )}
             </button>
@@ -386,7 +386,7 @@ export function Layout() {
             <div className="flex flex-col items-center gap-2">
               <button onClick={() => setShowAvatarPicker(true)} className="relative" title={profile?.display_name}>
                 <AvatarIcon avatarUrl={profile?.avatar_url || null} displayName={profile?.display_name || ''} size="sm" />
-                <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColor} rounded-full border-2 border-zinc-900`} />
+                <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColor} rounded-full border-2 border-zinc-900`} aria-label={presenceStatus === 'active' ? 'Online' : presenceStatus === 'idle' ? 'Idle' : 'Offline'} />
               </button>
               <button
                 onClick={() => { const next = !soundOn; setSoundOn(next); setSoundEnabled(next) }}
@@ -409,7 +409,7 @@ export function Layout() {
                     title="Change avatar"
                   >
                     <AvatarIcon avatarUrl={profile?.avatar_url || null} displayName={profile?.display_name || ''} size="sm" />
-                    <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColor} rounded-full border-2 border-zinc-900`} />
+                    <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${statusColor} rounded-full border-2 border-zinc-900`} aria-label={presenceStatus === 'active' ? 'Online' : presenceStatus === 'idle' ? 'Idle' : 'Offline'} />
                     <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center">
                       <Pencil className="w-3 h-3 text-white" />
                     </div>
@@ -498,7 +498,7 @@ export function Layout() {
                   ) : (
                     <>
                       <Copy className="w-4 h-4" />
-                      <span>{profile?.friend_code}</span>
+                      <span className="font-mono-nostalgic">{profile?.friend_code}</span>
                     </>
                   )}
                 </button>

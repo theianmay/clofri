@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Nostalgic font stack — Tahoma is the literal MSN Messenger font */
+body {
+  font-family: Tahoma, 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Monospace accent for system content (friend codes, timestamps, system messages) */
+.font-mono-nostalgic {
+  font-family: Consolas, 'Courier New', monospace;
+}
+
 @keyframes dialog-in {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
@@ -49,4 +59,29 @@
 
 .nudge-shake {
   animation: nudge-shake 0.6s ease-in-out;
+}
+
+/* Accessibility: respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .nudge-shake {
+    animation: none;
+  }
+
+  .animate-dialog-in {
+    animation: none;
+  }
+
+  .animate-fade-in {
+    animation: none;
+  }
+
+  .expand-section {
+    transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
 }

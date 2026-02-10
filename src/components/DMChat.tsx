@@ -137,8 +137,8 @@ export function DMChat() {
 
   return (
     <div className="flex-1 flex flex-col">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-3">
+      {/* Title bar — IM window chrome */}
+      <div className="px-4 py-3 bg-zinc-900 border-b border-zinc-700/50 flex items-center gap-3">
         <button
           onClick={() => navigate('/messages')}
           className="text-zinc-400 hover:text-white transition-colors"
@@ -151,12 +151,15 @@ export function DMChat() {
             displayName={friend?.display_name || 'Unknown'}
             size="sm"
           />
-          <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${
-            status === 'active' ? 'bg-green-500' : status === 'idle' ? 'bg-amber-400' : 'bg-zinc-600'
-          } rounded-full border-2 border-zinc-900`} />
+          <span
+            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${
+              status === 'active' ? 'bg-green-500' : status === 'idle' ? 'bg-amber-400' : 'bg-zinc-600'
+            } rounded-full border-2 border-zinc-900`}
+            aria-label={statusText}
+          />
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-white font-semibold truncate">
+          <h2 className="text-white font-semibold truncate text-sm">
             {friend?.display_name || 'Loading...'}
           </h2>
           <p className="text-zinc-500 text-xs">
@@ -204,30 +207,33 @@ export function DMChat() {
                     : <AvatarIcon avatarUrl={msg.avatar_url} displayName={msg.display_name} size="sm" className="shrink-0" />
                 )}
                 <div className={`max-w-[70%] ${isOwn ? 'text-right' : ''}`}>
+                  {!isGrouped && (
+                    <p className={`text-sm font-medium mb-1 ${isOwn ? 'text-blue-400/60' : 'text-zinc-500'}`}>
+                      {msg.display_name}
+                      <span className="text-[11px] font-normal font-mono-nostalgic text-zinc-700 ml-2">
+                        {new Date(msg.created_at).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </p>
+                  )}
                   <div
-                    className={`inline-block px-3 py-2 rounded-2xl text-sm break-words ${
+                    className={`inline-block px-3 py-2 rounded-2xl text-sm break-words border ${
                       isOwn
-                        ? 'bg-blue-600 text-white rounded-br-md'
-                        : 'bg-zinc-800 text-zinc-200 rounded-bl-md'
+                        ? 'bg-blue-500/10 border-blue-500/20 text-blue-100 rounded-br-md'
+                        : 'bg-zinc-800/50 border-zinc-700/40 text-zinc-200 rounded-bl-md'
                     }`}
                   >
                     {linkifyText(msg.text)}
                   </div>
-                  {!isGrouped && (
-                    <p className="text-zinc-700 text-[10px] mt-1">
-                      {new Date(msg.created_at).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  )}
                 </div>
               </div>
             )
           })}
           {nudgeMsg && (
             <div className="text-center py-2">
-              <span className="text-zinc-500 text-xs italic">{nudgeMsg}</span>
+              <span className="text-zinc-500 text-xs italic font-mono-nostalgic">{nudgeMsg}</span>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -246,22 +252,22 @@ export function DMChat() {
       </div>
 
       {/* Ephemeral notice */}
-      <div className="px-4 py-1">
-        <p className="text-zinc-600 text-xs text-center">
+      <div className="px-4 py-1.5 bg-zinc-900/50 border-t border-zinc-800/50">
+        <p className="text-zinc-600 text-[10px] text-center font-mono-nostalgic">
           Messages are ephemeral — they disappear when the conversation ends
         </p>
       </div>
 
       {/* Input — disabled when friend is offline */}
       {status === 'offline' ? (
-        <div className="p-4 border-t border-zinc-800">
+        <div className="p-4 bg-zinc-900 border-t border-zinc-700/50">
           <div className="flex items-center justify-center gap-2 py-2.5 bg-zinc-800/50 rounded-xl border border-zinc-700/50">
             <WifiOff className="w-4 h-4 text-zinc-500" />
             <span className="text-zinc-500 text-sm">{friend?.display_name || 'Friend'} is offline — messages can't be delivered</span>
           </div>
         </div>
       ) : (
-        <form onSubmit={handleSend} className="p-4 border-t border-zinc-800">
+        <form onSubmit={handleSend} className="p-4 bg-zinc-900 border-t border-zinc-700/50">
           <div className="flex gap-2">
             <input
               ref={inputRef}
