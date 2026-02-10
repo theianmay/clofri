@@ -36,10 +36,17 @@ export const useFriendStore = create<FriendState>((set, get) => ({
       if (!user) { set({ loading: false }); return }
 
       // Get all friendships involving this user
-      const { data: friendships } = await supabase
+      const { data: friendships, error: queryError } = await supabase
         .from('friendships')
         .select('*')
         .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+
+      // If query failed, keep existing data — don't wipe on transient errors
+      if (queryError) {
+        console.warn('fetchFriends query error (keeping existing data):', queryError.message)
+        set({ loading: false })
+        return
+      }
 
       if (!friendships || friendships.length === 0) {
         set({ friends: [], pendingReceived: [], pendingSent: [], loading: false })
@@ -54,10 +61,16 @@ export const useFriendStore = create<FriendState>((set, get) => ({
       })
       userIds.delete(user.id)
 
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .in('id', [...userIds])
+
+      if (profilesError) {
+        console.warn('fetchFriends profiles query error (keeping existing data):', profilesError.message)
+        set({ loading: false })
+        return
+      }
 
       const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
 
