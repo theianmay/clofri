@@ -210,7 +210,7 @@ export function DMChat() {
                   {!isGrouped && (
                     <p className={`text-sm font-medium mb-1 ${isOwn ? 'text-blue-400/60' : 'text-zinc-500'}`}>
                       {msg.display_name}
-                      <span className="text-[10px] font-normal font-mono-nostalgic text-zinc-700 ml-2">
+                      <span className="text-[11px] font-normal font-mono-nostalgic text-zinc-700 ml-2">
                         {new Date(msg.created_at).toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',
