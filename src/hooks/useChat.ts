@@ -60,16 +60,23 @@ export function useChat({ groupId, onNudgeReceived }: UseChatOptions) {
 
           const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
 
-          setMessages(
-            data.map((m: any) => ({
-              id: m.id,
-              user_id: m.user_id,
-              display_name: profileMap.get(m.user_id)?.display_name || 'Unknown',
-              avatar_url: profileMap.get(m.user_id)?.avatar_url || null,
-              text: m.text,
-              created_at: m.created_at,
-            }))
-          )
+          const dbMessages: ChatMessage[] = data.map((m: any) => ({
+            id: m.id,
+            user_id: m.user_id,
+            display_name: profileMap.get(m.user_id)?.display_name || 'Unknown',
+            avatar_url: profileMap.get(m.user_id)?.avatar_url || null,
+            text: m.text,
+            created_at: m.created_at,
+          }))
+
+          // Merge: keep any optimistic/broadcast messages not yet persisted
+          setMessages((prev) => {
+            const dbIds = new Set(dbMessages.map(m => m.id))
+            const pending = prev.filter(m => !dbIds.has(m.id))
+            return [...dbMessages, ...pending]
+              .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+              .slice(-50)
+          })
         }
       } catch (err) {
         console.error('fetchHistory unexpected error:', err)
