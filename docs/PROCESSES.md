@@ -347,6 +347,7 @@ All issues below have been **fixed** in the codebase.
 | 4 | `createGroup` lacked try-catch (spinner could get stuck) | `groupStore.ts` | Medium | ✅ Fixed |
 | 5 | `leaveGroup`, `endGroupSession`, `deleteGroup`, `kickMember` lacked try-catch | `groupStore.ts` | Medium | ✅ Fixed |
 | 6 | `signInWithMagicLink` lacked try-catch (Login spinner could get stuck) | `authStore.ts` | Medium | ✅ Fixed |
+| 7 | `fetchFriends`/`fetchGroups` set `loading: true` on every call — tab-return re-fetch replaces data with spinner; if Supabase is slow (token refresh after background), spinner gets stuck | `friendStore.ts`, `groupStore.ts` | High | ✅ Fixed |
 
 ---
 
