@@ -25,12 +25,17 @@ export function Home() {
     if (!newGroupName.trim()) return
     setActionLoading(true)
     setError(null)
-    const group = await createGroup(newGroupName.trim())
-    setActionLoading(false)
-    if (group) {
-      setShowCreate(false)
-      setNewGroupName('')
-      navigate(`/group/${group.id}`)
+    try {
+      const group = await createGroup(newGroupName.trim())
+      if (group) {
+        setShowCreate(false)
+        setNewGroupName('')
+        navigate(`/group/${group.id}`)
+      }
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setActionLoading(false)
     }
   }
 
@@ -39,14 +44,19 @@ export function Home() {
     if (!joinCode.trim()) return
     setActionLoading(true)
     setError(null)
-    const result = await joinGroupByCode(joinCode.trim())
-    setActionLoading(false)
-    if (result.error) {
-      setError(result.error)
-    } else if (result.groupId) {
-      setShowJoin(false)
-      setJoinCode('')
-      navigate(`/group/${result.groupId}`)
+    try {
+      const result = await joinGroupByCode(joinCode.trim())
+      if (result.error) {
+        setError(result.error)
+      } else if (result.groupId) {
+        setShowJoin(false)
+        setJoinCode('')
+        navigate(`/group/${result.groupId}`)
+      }
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setActionLoading(false)
     }
   }
 
