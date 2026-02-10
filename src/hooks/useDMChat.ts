@@ -33,14 +33,8 @@ export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOpt
   useEffect(() => {
     if (!profile || !sessionId || !friendId) return
 
-    // Profile cache to avoid repeated lookups during polls
-    const profileCache = new Map<string, { display_name: string; avatar_url: string | null }>()
-    let isFetching = false
-
-    // Fetch recent DMs for this session from DB (also used as poll fallback)
+    // Fetch recent DMs for this session from DB
     const fetchHistory = async () => {
-      if (isFetching) return
-      isFetching = true
       try {
         const { data, error } = await supabase
           .from('direct_messages')
@@ -52,50 +46,35 @@ export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOpt
         if (error) console.error('DM fetchHistory error:', error)
 
         if (data) {
-          // Only fetch profiles we haven't cached yet
-          const unknownIds = [...new Set(data.map((m: any) => m.sender_id as string))]
-            .filter(id => !profileCache.has(id))
-          if (unknownIds.length > 0) {
-            const { data: profiles } = await supabase
-              .from('profiles')
-              .select('*')
-              .in('id', unknownIds)
-            ;(profiles || []).forEach((p: any) =>
-              profileCache.set(p.id, { display_name: p.display_name, avatar_url: p.avatar_url })
-            )
-          }
+          const userIds = [...new Set(data.map((m: any) => m.sender_id))]
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('*')
+            .in('id', userIds)
+
+          const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
 
           const dbMessages: DMMessage[] = data.map((m: any) => ({
             id: m.id,
             sender_id: m.sender_id,
             receiver_id: m.receiver_id,
-            display_name: profileCache.get(m.sender_id)?.display_name || 'Unknown',
-            avatar_url: profileCache.get(m.sender_id)?.avatar_url || null,
+            display_name: profileMap.get(m.sender_id)?.display_name || 'Unknown',
+            avatar_url: profileMap.get(m.sender_id)?.avatar_url || null,
             text: m.text,
             created_at: m.created_at,
           }))
 
           // Merge DB data with any optimistic/broadcast messages not yet persisted
-          let hasNewFromOther = false
           setMessages((prev) => {
             const dbIds = new Set(dbMessages.map(m => m.id))
             const pending = prev.filter(m => !dbIds.has(m.id))
-            const merged = [...dbMessages, ...pending]
+            return [...dbMessages, ...pending]
               .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
               .slice(-50)
-            const prevIds = new Set(prev.map(m => m.id))
-            hasNewFromOther = merged.some(m => !prevIds.has(m.id) && m.sender_id !== profile.id)
-            return merged
           })
-
-          if (hasNewFromOther && isSoundEnabled()) {
-            playMessageSound()
-          }
         }
       } catch (err) {
         console.error('DM fetchHistory unexpected error:', err)
-      } finally {
-        isFetching = false
       }
     }
 
@@ -104,7 +83,9 @@ export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOpt
     // Realtime channel scoped to session
     const channelName = `dm-session:${sessionId}`
 
-    const channel = supabase.channel(channelName)
+    const channel = supabase.channel(channelName, {
+      config: { presence: { key: profile.id } },
+    })
 
     // Listen for broadcast messages
     channel.on('broadcast', { event: 'message' }, ({ payload }) => {
@@ -144,21 +125,25 @@ export function useDMChat({ sessionId, friendId, onNudgeReceived }: UseDMChatOpt
       onNudgeReceived?.(display_name)
     })
 
-    channel.subscribe()
+    channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await channel.track({
+          user_id: profile.id,
+          display_name: profile.display_name,
+          avatar_url: profile.avatar_url,
+        })
+      }
+    })
 
     channelRef.current = channel
 
-    // Poll DB as fallback for missed broadcasts
-    const pollInterval = setInterval(fetchHistory, 3000)
-
-    // Refetch when tab becomes visible
+    // Refetch when tab becomes visible (catches messages missed while backgrounded)
     const handleVisibility = () => {
       if (!document.hidden) fetchHistory()
     }
     document.addEventListener('visibilitychange', handleVisibility)
 
     return () => {
-      clearInterval(pollInterval)
       document.removeEventListener('visibilitychange', handleVisibility)
       supabase.removeChannel(channel)
       channelRef.current = null
